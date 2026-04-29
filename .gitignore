@@ -41,6 +41,13 @@ venv/
 dist/
 build/
 
+### IDE - IntelliJ / WebStorm ###
+.idea/
+
 ### Data files (generated) ###
 tencent_video_agent/data/*.json
 !tencent_video_agent/data/.gitkeep
+tencent_video_agent/data/chroma_db/
+
+### Local settings ###
+.claude/settings.local.json
