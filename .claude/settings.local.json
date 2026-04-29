@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python data/generate_data.py)",
+      "Bash(python -c 'import json; d=json.load\\(open\\('\\\\''__TRACKED_VAR__'\\\\'', encoding='\\\\''utf-8'\\\\''\\)\\); print\\(len\\(d\\), '\\\\''records, keys:'\\\\'', list\\(d[0].keys\\(\\)\\) if d else '\\\\''empty'\\\\''\\)')",
+      "Bash(python -m pytest tests/test_data_generation.py -v)",
+      "Bash(python *)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

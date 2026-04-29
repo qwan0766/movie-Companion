@@ -1,0 +1,32 @@
+# LangChain 生态
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+langgraph>=0.3.0
+langsmith>=0.1.0
+
+# LLM
+openai>=1.0.0
+
+# 向量数据库
+chromadb>=0.5.0
+sentence-transformers
+
+# 知识图谱
+neo4j>=5.0.0
+
+# API 服务
+fastapi>=0.110.0
+uvicorn[standard]
+
+# 前端
+streamlit>=1.35.0
+
+# 工具
+pydantic>=2.0.0
+python-dotenv
+httpx
+
+# 测试
+pytest>=8.0.0
+pytest-cov

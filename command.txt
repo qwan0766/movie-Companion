@@ -1,0 +1,7 @@
+$env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
+$env:ANTHROPIC_AUTH_TOKEN = "sk-705b3d7fdbd14cc5b592a18c6c4b112f"
+$env:ANTHROPIC_API_KEY = "dummy"
+$env:ANTHROPIC_MODEL = "deepseek-v4-flash"          # 主力
+$env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "deepseek-v4-flash"  # 快速子任务
+
+claude --permission-mode acceptEdits
