@@ -51,3 +51,6 @@ tencent_video_agent/data/chroma_db/
 
 ### Local settings ###
 .claude/settings.local.json
+
+### Misc ###
+command.txt
