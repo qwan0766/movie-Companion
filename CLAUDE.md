@@ -110,31 +110,51 @@ tencent_video_agent/     # 【未创建】项目主目录
   - 测试：27 项 Agent 测试全部通过（累计 51/51）
 
 #### 第3-4天：视频检索系统
-- [ ] **未完成** — 搭建 Chroma 向量数据库
-- [ ] **未完成** — 实现语义相似检索 + 传统过滤（类型、年代、演员）
-- [ ] **交付物**：向量数据库 + 检索工具函数
-- 📋 **详细计划已就绪** → `项目进度/W2-D3-4-详细计划.md`
+- [x] **已完成** — 搭建 Chroma 向量数据库
+- [x] **已完成** — 实现语义相似检索 + 传统过滤（类型、年代、演员）
+- [x] **交付物**：向量数据库 + 检索工具函数 ✅
+  - `tools/search_tools.py` — parse_query / semantic_search / filter_videos / hybrid_search
+  - `agents/retrieval_agent.py` — 混合检索 Agent（含响应生成）
+  - parse_query 支持：类型/年代(含中文数字)/评分/演员/地区
+  - hybrid_search 策略：语义+过滤 → 权重融合 → 去重排序
+  - 测试：37 项检索测试全部通过（累计 88/88）
 
 #### 第5天：影视知识库构建
-- [ ] **未完成** — 整理/爬取导演、演员、奖项等知识
-- [ ] **未完成** — 构建 Neo4j 小型知识图谱
-- [ ] **未完成** — 实现 RAG 检索功能
-- [ ] **交付物**：知识库 + RAG 单元测试用例
+- [x] **已完成** — 整理/爬取导演、演员、奖项等知识
+- [x] **已完成** — 构建 Neo4j 小型知识图谱
+- [x] **已完成** — 实现 RAG 检索功能
+- [x] **交付物**：知识库 + RAG 单元测试用例 ✅
+  - `knowledge_graph/kg_schema.py` — Neo4j 数据模型 + Cypher DDL + 导入脚本
+  - `knowledge_graph/kg_queries.py` — 6 个 Cypher 查询函数（演员/导演/视频/搜索）
+  - `tools/knowledge_tools.py` — SQLite 兜底 + Neo4j 自动切换 + 查询类型识别
+  - `agents/knowledge_agent.py` — 知识查询 Agent（含结果格式化）
+  - 测试：22 项知识库测试全部通过（累计 109/109）
 
 ---
 
 ### 第三周：LangGraph 工作流集成（项目核心）
 
 #### 第1-2天：设计状态图（StateGraph）
-- [ ] **未完成** — 定义 Agent 间状态流转
-- [ ] **未完成** — 实现条件边 + 普通边
-- [ ] **交付物**：完整的 LangGraph 工作流
+- [x] **已完成** — 定义 Agent 间状态流转
+- [x] **已完成** — 实现条件边 + 普通边
+- [x] **交付物**：完整的 LangGraph 工作流 ✅
+  - `graph/nodes.py` — 5 个节点函数（intent/retrieval/knowledge/chat/respond）
+  - `graph/graph.py` — StateGraph 构建 + 条件边路由 + MemorySaver + run_query
+  - 工作流：START → intent_agent(条件边) → 4 分支 → respond_node → END
+  - 记忆：MemorySaver + thread_id 隔离
+  - 测试：11 项端到端测试全部通过（累计 120/120）
 
 #### 第3-4天：工作流优化与调试
-- [ ] **未完成** — 添加记忆机制（对话历史）
-- [ ] **未完成** — 实现工具调用（实时搜索等）
-- [ ] **未完成** — 优化 Agent 协作逻辑
-- [ ] **交付物**：可调用的 API 服务 + LangSmith 追踪
+- [x] **已完成** — LangSmith 追踪集成（环境变量配置 + 自动继承）
+- [x] **已完成** — Tool Calling 定义（4 个标准 LangChain @tool）
+- [x] **已完成** — MakePlan Agent（plan_agent）替代 chat_agent 兜底
+- [x] **已完成** — safe_node 错误包装 + respond_node 智能回复增强
+- [x] **交付物**：LangSmith 追踪 + Tool Calling + 优化后工作流 ✅
+  - `tools/tool_definitions.py` — 4 个标准 Tool（hybrid_search / parse_query / knowledge_search / detect_query_type）
+  - `agents/plan_agent.py` — 观影计划 Agent（时间/心情解析 + 结构化编排 + 格式化输出）
+  - `graph/nodes.py` — +plan_node +safe_node 异常包装
+  - `graph/graph.py` — make_plan 路由到 plan_agent
+  - 测试：146/146 全部通过（+plan_agent: 16 / +tool_definitions: 9 / +workflow: 1）
 
 #### 第5天：后端 API 开发
 - [ ] **未完成** — 用 FastAPI 封装整个 Graph

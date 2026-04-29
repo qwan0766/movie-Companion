@@ -29,6 +29,8 @@ FIND_MOVIE_PATTERNS = [
 ASK_INFO_PATTERNS = [
     (r"(演员|导演|编剧|主演|角色).{0,6}(是谁|介绍|资料|信息|作品|演过|拍过|执导)", 1.0),
     (r"(介绍|说说|讲讲|科普).{0,6}(演员|导演|影视|电影|剧)", 0.95),
+    (r"介绍.{0,4}[一-鿿]{2,4}", 0.85),  # "介绍张毅" / "介绍一下张毅"
+    (r"谁是.{0,6}[一-鿿]{2,4}", 0.90),   # "谁是张毅"
     (r"(谁|哪个演员|哪位导演).{0,12}(演的|拍的|执导|主演)", 0.95),
     (r"还演过|还拍过|代表作|作品有", 0.90),
     (r"(获奖|提名|奖项|奖)", 0.80),
@@ -138,9 +140,14 @@ class IntentAgent(BaseAgent):
                 "errors": ["没有用户消息"],
             }
 
-        # 取最后一条用户消息
+        # 取最后一条用户消息（兼容 dict 和 LangChain Message 对象）
         last_msg = messages[-1]
-        user_text = last_msg if isinstance(last_msg, str) else last_msg.get("content", "")
+        if isinstance(last_msg, str):
+            user_text = last_msg
+        elif hasattr(last_msg, "content"):
+            user_text = last_msg.content
+        else:
+            user_text = last_msg.get("content", "")
 
         # 规则分类
         intent, confidence, reason = _classify_intent(user_text)

@@ -47,7 +47,7 @@ class RetrievalAgent(BaseAgent):
 
         # 取最后一条用户消息
         last_msg = messages[-1]
-        user_text = last_msg if isinstance(last_msg, str) else last_msg.get("content", "")
+        user_text = last_msg if isinstance(last_msg, str) else (last_msg.content if hasattr(last_msg, "content") else last_msg.get("content", ""))
 
         # 解析查询条件
         parsed = parse_query(user_text)

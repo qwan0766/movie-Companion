@@ -70,7 +70,7 @@ class ChatAgent(BaseAgent):
             }
 
         last_msg = messages[-1]
-        user_text = last_msg if isinstance(last_msg, str) else last_msg.get("content", "")
+        user_text = last_msg if isinstance(last_msg, str) else (last_msg.content if hasattr(last_msg, "content") else last_msg.get("content", ""))
 
         # 根据输入类型选择回应
         if _is_greeting(user_text):

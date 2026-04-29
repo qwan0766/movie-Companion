@@ -47,6 +47,10 @@ def _extract_year(text: str) -> tuple[int | None, int | None]:
     Returns:
         (year_start, year_end)
     """
+    # 中文数字映射
+    chinese_num = {"一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
+                   "六": 6, "七": 7, "八": 8, "九": 9, "十": 10}
+
     # 具体年份: 2020年
     m = re.search(r"(\d{4})年", text)
     if m:
@@ -57,10 +61,12 @@ def _extract_year(text: str) -> tuple[int | None, int | None]:
             return (None, year)
         return (year, year)
 
-    # 近N年
-    m = re.search(r"近(\d+)年", text)
+    # 近N年（支持中文数字: 近三年, 近5年）
+    m = re.search(r"近(\d|[一二两三四五六七八九十]+)年", text)
     if m:
-        return (2026 - int(m.group(1)), None)
+        num_str = m.group(1)
+        n = int(num_str) if num_str.isdigit() else chinese_num.get(num_str, 3)
+        return (2026 - n, None)
 
     # "经典"和"老片" → 早些年
     if "经典" in text or "老片" in text:
@@ -87,7 +93,7 @@ def _extract_rating(text: str) -> float | None:
 
 def _extract_actor(text: str) -> str | None:
     """从查询中提取演员名"""
-    m = re.search(r"(?:演员|主演|饰演者|出演者)[：:]?\s*([一-鿿]{2,4})", text)
+    m = re.search(r"(?:演员|主演|饰演者|出演者)[：:]?\s*([一-鿿]{2,4}?)(?=[的演主出等，。、]|$)", text)
     if m:
         return m.group(1)
     return None
