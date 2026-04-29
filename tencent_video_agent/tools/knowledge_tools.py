@@ -225,6 +225,10 @@ def detect_query_type(text: str) -> tuple[str, str]:
                 name = _extract_entity_name(text, text.find(prefix) + len(prefix))
                 if name:
                     return (f"{'actor' if '演员' in prefix else 'director'}_films", name)
+        # "介绍一下张毅" → 提取"介绍"后面的名字
+        m = re.search(r"介绍(?:一下)?([一-鿿]{2,4})", text)
+        if m:
+            return ("actor_films", m.group(1))
         return ("search", text)
 
     # 包含演员名 + 作品

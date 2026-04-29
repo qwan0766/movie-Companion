@@ -1,14 +1,16 @@
-"""观影计划 Agent — 接收 make_plan 路由，生成结构化观影计划"""
+"""观影计划 Agent — 完全基于 LLM 的参数提取与计划编排"""
 
-import re
+import json
 from typing import Any
 
 from agents.base_agent import BaseAgent
 from graph.state import AgentState
-from tools.search_tools import hybrid_search, parse_query
+from tools.search_tools import hybrid_search
+from utils.llm_client import get_llm
+from utils.prompts import build_plan_parse_prompt
 
 SYSTEM_PROMPT = """你是一个腾讯视频智能助手的观影计划制定Agent。
-你的职责是根据用户的观影需求（时间、类型、人数、心情等），
+根据用户的观影需求（时间、类型、人数、心情等），
 从片库中筛选合适的视频，并编排成结构化的观影计划。
 
 能力范围:
@@ -18,58 +20,27 @@ SYSTEM_PROMPT = """你是一个腾讯视频智能助手的观影计划制定Agen
 4. 按合理顺序编排观影计划
 5. 给出推荐理由和观影提示"""
 
-# ── 时间偏好映射 ───────────────────────────────────────────────────────
 
-TIME_SLOT_PATTERNS: list[tuple[str, str | None, str]] = [
-    (r"(今晚|今天晚上|今晚)", "今晚", "晚间"),
-    (r"(明天|明天晚上)", "明天", "全天"),
-    (r"(周末|周六|周日|星期六|星期天)", "周末", "全天"),
-    (r"(这周|本周|这星期)", "本周", "灵活"),
-    (r"(下午|今天下午)", "今天下午", "午后"),
-]
+def _parse_plan_with_llm(user_text: str) -> dict:
+    """使用 LLM 提取计划参数"""
+    llm = get_llm()
+    prompt = build_plan_parse_prompt(user_text)
+    response = llm.invoke(prompt)
+    content = response.content.strip()
 
-MOOD_KEYWORDS: dict[str, list[str]] = {
-    "轻松": ["轻松", "开心", "欢乐", "搞笑", "愉快", "放松"],
-    "刺激": ["刺激", "紧张", "悬疑", "烧脑", "震撼"],
-    "感动": ["感动", "感人", "温馨", "温暖", "治愈", "催泪"],
-    "经典": ["经典", "怀旧", "老片", "回味"],
-    "刺激冒险": ["冒险", "科幻", "奇幻", "动作"],
-}
+    if content.startswith("```"):
+        content = content.split("\n", 1)[1]
+        if content.endswith("```"):
+            content = content[:-3].strip()
 
-
-def _extract_time_slot(text: str) -> str:
-    """提取时间偏好"""
-    for pattern, slot, _ in TIME_SLOT_PATTERNS:
-        if re.search(pattern, text):
-            return slot
-    return "今晚"
-
-
-def _extract_mood(text: str) -> str | None:
-    """提取心情偏好"""
-    for mood, keywords in MOOD_KEYWORDS.items():
-        for kw in keywords:
-            if kw in text:
-                return mood
-    return None
-
-
-def _adjust_query_for_plan(text: str) -> str:
-    """根据计划场景调整查询文本，提升检索效果"""
-    time_slot = _extract_time_slot(text)
-    mood = _extract_mood(text)
-    parsed = parse_query(text)
-
-    parts = []
-    if parsed.get("genre"):
-        parts.append(parsed["genre"])
-    if mood:
-        parts.append(mood)
-    if parsed.get("region"):
-        parts.append(parsed["region"])
-
-    query = " ".join(parts) if parts else text
-    return query
+    result = json.loads(content)
+    return {
+        "time_slot": result.get("time_slot") or "今晚",
+        "mood": result.get("mood"),
+        "genre": result.get("genre"),
+        "region": result.get("region"),
+        "keywords": result.get("keywords", user_text),
+    }
 
 
 def _build_plan_schedule(videos: list[dict], time_slot: str, mood: str | None) -> list[dict]:
@@ -97,12 +68,7 @@ def _build_plan_schedule(videos: list[dict], time_slot: str, mood: str | None) -
     return schedule
 
 
-def _format_plan_response(
-    schedule: list[dict],
-    time_slot: str,
-    mood: str | None,
-    total_count: int,
-) -> str:
+def _format_plan_response(schedule: list[dict], time_slot: str, mood: str | None) -> str:
     """格式化计划为自然语言"""
     if not schedule:
         return ("暂时没有找到合适的影片来制定计划。"
@@ -146,7 +112,7 @@ def _format_plan_response(
 
 
 class PlanAgent(BaseAgent):
-    """观影计划 Agent"""
+    """观影计划 Agent — 完全基于 LLM"""
 
     name: str = "plan_agent"
 
@@ -171,38 +137,31 @@ class PlanAgent(BaseAgent):
             else last_msg.get("content", "")
         )
 
-        # 提取偏好
-        time_slot = _extract_time_slot(user_text)
-        mood = _extract_mood(user_text)
-        parsed = parse_query(user_text)
+        try:
+            params = _parse_plan_with_llm(user_text)
+        except Exception:
+            params = {"time_slot": "今晚", "mood": None, "genre": None,
+                      "region": None, "keywords": user_text}
 
-        # 检索候选视频
-        search_query = _adjust_query_for_plan(user_text)
-        videos = hybrid_search(search_query, n_results=10)
-
-        # 编排计划
-        schedule = _build_plan_schedule(videos, time_slot, mood)
+        videos = hybrid_search(params["keywords"], n_results=10)
+        schedule = _build_plan_schedule(videos, params["time_slot"], params["mood"])
 
         plan = {
-            "time_slot": time_slot,
-            "mood": mood,
+            "time_slot": params["time_slot"],
+            "mood": params["mood"],
             "preferences": {
-                "genres": [parsed["genre"]] if parsed.get("genre") else [],
-                "region": parsed.get("region"),
-                "mood": mood,
+                "genres": [params["genre"]] if params.get("genre") else [],
+                "region": params.get("region"),
+                "mood": params["mood"],
             },
             "schedule": schedule,
             "total_count": len(schedule),
         }
 
-        # 优先使用已有检索结果
         existing_videos = state.get("retrieved_videos", [])
-        if not existing_videos and videos:
-            retrieved = videos
-        else:
-            retrieved = existing_videos
+        retrieved = existing_videos if existing_videos else videos
 
-        response = _format_plan_response(schedule, time_slot, mood, len(schedule))
+        response = _format_plan_response(schedule, params["time_slot"], params["mood"])
 
         return {
             "plan": plan,

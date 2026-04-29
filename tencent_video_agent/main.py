@@ -1,8 +1,11 @@
 """腾讯视频智能观影助手 - 入口"""
 
 import uvicorn
+from dotenv import load_dotenv
 
 from api.config import API_HOST, API_PORT, API_RELOAD
+
+load_dotenv()
 
 
 def main() -> None:

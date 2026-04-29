@@ -6,7 +6,7 @@ import httpx
 import streamlit as st
 
 API_BASE_URL = "http://localhost:8000"
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 60
 
 
 @st.cache_data(ttl=60, show_spinner=False)
