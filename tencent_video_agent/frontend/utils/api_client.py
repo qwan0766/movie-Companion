@@ -1,11 +1,14 @@
-"""FastAPI 后端客户端封装"""
+"""FastAPI 后端客户端封装（含流式 SSE 支持）"""
 
-from typing import Any
+from __future__ import annotations
+
+import json
+from typing import Any, Generator
 
 import httpx
 import streamlit as st
 
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = "http://localhost:8001"
 REQUEST_TIMEOUT = 60
 
 
@@ -68,3 +71,40 @@ def send_chat(query: str, thread_id: str = "default") -> dict[str, Any]:
             "knowledge_result": {},
             "plan": {},
         }
+
+
+def stream_chat(
+    query: str, thread_id: str = "default"
+) -> Generator[tuple[str, str], None, None]:
+    """SSE 流式对话 — 生成器，产出 (event_type, data) 元组
+
+    Args:
+        query: 用户输入
+        thread_id: 会话 ID
+
+    Yields:
+        (event_type, data) 元组
+        - ("stage", "正在分析你的需求...")
+        - ("token", "推")   ← 逐字内容
+        - ("result", '{"response":"...",...}')
+    """
+    url = f"{API_BASE_URL}/chat/stream"
+    payload = {"query": query, "thread_id": thread_id}
+
+    try:
+        with httpx.Client(timeout=REQUEST_TIMEOUT) as client:
+            with client.stream("POST", url, json=payload) as resp:
+                current_event = ""
+                for line in resp.iter_lines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line.startswith("event: "):
+                        current_event = line[7:]
+                    elif line.startswith("data: "):
+                        data = line[6:]
+                        if current_event:
+                            yield current_event, data
+                        current_event = ""
+    except Exception as e:
+        yield "error", str(e)

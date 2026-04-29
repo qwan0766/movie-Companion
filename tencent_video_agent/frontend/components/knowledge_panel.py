@@ -1,4 +1,4 @@
-"""知识查询结果面板组件"""
+"""知识查询结果面板 — 简约卡片风格"""
 
 from typing import Any
 
@@ -6,11 +6,6 @@ import streamlit as st
 
 
 def render_knowledge_panel(result: dict) -> None:
-    """渲染知识查询结果
-
-    Args:
-        result: knowledge_search() 返回的完整结果
-    """
     rtype = result.get("type", "")
     data = result.get("data", [])
     source = result.get("source", "sqlite")
@@ -19,72 +14,46 @@ def render_knowledge_panel(result: dict) -> None:
         st.info("没有找到相关信息。")
         return
 
-    source_tag = f"数据来源: {source}"
-
     if rtype == "actor_films":
-        _render_actor_films(data, source_tag)
+        _render_actor_films(data, source)
     elif rtype == "director_films":
-        _render_director_films(data, source_tag)
+        _render_director_films(data, source)
     elif rtype == "video_details":
-        _render_video_details(data, source_tag)
+        _render_video_details(data, source)
     elif rtype == "search":
-        _render_search_results(data, source_tag)
+        _render_search_results(data, source)
     else:
         st.warning(f"未知的结果类型: {rtype}")
 
 
-def _render_actor_films(data: list[dict], source_tag: str) -> None:
-    """演员作品列表"""
-    if not data:
-        st.info("该演员暂无作品信息。")
-        return
-
+def _render_actor_films(data: list[dict], source: str) -> None:
     actor_name = data[0].get("actor_name", "演员")
-    st.markdown(f"#### :clapper: {actor_name} 的作品")
-
-    for v in data[:8]:
-        title = v.get("title", "未知")
-        year = v.get("year", "")
-        rating = v.get("rating", "")
-        rating_str = f" ⭐{rating}" if rating else ""
-        year_str = f" ({year})" if year else ""
-
-        st.markdown(f"- **{title}**{year_str}{rating_str}")
-
-    if len(data) > 8:
-        st.caption(f"...还有 {len(data) - 8} 部作品")
-
-    st.caption(source_tag)
+    items = "".join(
+        _film_item(v) for v in data[:10]
+    )
+    more = f'<div style="color:var(--text-muted);font-size:13px;margin-top:4px;">...还有 {len(data) - 10} 部</div>' if len(data) > 10 else ""
+    st.markdown(
+        f'<div class="k-card"><h4>🎭 {actor_name} 的作品</h4>{items}{more}'
+        f'<div class="k-meta">📦 {source}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
-def _render_director_films(data: list[dict], source_tag: str) -> None:
-    """导演作品列表"""
-    if not data:
-        st.info("该导演暂无作品信息。")
-        return
-
+def _render_director_films(data: list[dict], source: str) -> None:
     director_name = data[0].get("director_name", "导演")
-    st.markdown(f"#### :clapper: {director_name} 执导的作品")
-
-    for v in data[:8]:
-        title = v.get("title", "未知")
-        year = v.get("year", "")
-        rating = v.get("rating", "")
-        rating_str = f" ⭐{rating}" if rating else ""
-        year_str = f" ({year})" if year else ""
-
-        st.markdown(f"- **{title}**{year_str}{rating_str}")
-
-    if len(data) > 8:
-        st.caption(f"...还有 {len(data) - 8} 部作品")
-
-    st.caption(source_tag)
+    items = "".join(
+        _film_item(v) for v in data[:10]
+    )
+    more = f'<div style="color:var(--text-muted);font-size:13px;margin-top:4px;">...还有 {len(data) - 10} 部</div>' if len(data) > 10 else ""
+    st.markdown(
+        f'<div class="k-card"><h4>🎬 {director_name} 执导的作品</h4>{items}{more}'
+        f'<div class="k-meta">📦 {source}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
-def _render_video_details(data: dict | list, source_tag: str) -> None:
-    """视频详情"""
+def _render_video_details(data: dict | list, source: str) -> None:
     v = data if isinstance(data, dict) else data[0] if data else {}
-
     if not v:
         st.info("未找到该视频的详细信息。")
         return
@@ -101,59 +70,66 @@ def _render_video_details(data: dict | list, source_tag: str) -> None:
     if isinstance(genres, str):
         genres = genres.split(",") if genres else []
 
-    st.markdown(f"#### :clapper: {title}")
+    d_names = [d.get("name", "") for d in directors]
+    a_names = [a.get("name", "") for a in actors[:5]]
+    a_suffix = "…" if len(actors) > 5 else ""
+    d_str = " / ".join(d_names) if d_names else ""
+    a_str = " / ".join(a_names) + a_suffix if a_names else ""
+    tags_str = " ".join(f'<span class="video-tag">{g}</span>' for g in genres[:3])
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("评分", rating)
-    with col2:
-        st.metric("年份", year)
-    with col3:
-        genre_str = "/".join(genres[:3]) if genres else "未知"
-        st.metric("类型", genre_str)
+    body = f'<div class="k-card"><h4>🎬 {title}</h4>'
+    body += f'<div style="display:flex;gap:20px;margin:12px 0;font-size:14px;">'
+    body += f'<span><span style="color:var(--primary);font-weight:600;">⭐ {rating}</span></span>'
+    body += f'<span style="color:var(--text-secondary);">{year}</span>'
+    body += f'<span style="color:var(--text-secondary);">🌍 {region}</span></div>'
+    body += f'<div>{tags_str}</div>'
+    body += f'<div style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--text-secondary);">{description}</div>'
+    if d_str:
+        body += f'<div class="k-item" style="margin-top:8px;"><b>导演</b>：{d_str}</div>'
+    if a_str:
+        body += f'<div class="k-item"><b>主演</b>：{a_str}</div>'
+    body += f'<div class="k-meta">📦 {source}</div></div>'
 
-    if region:
-        st.caption(f":earth_asia: {region}")
-
-    st.markdown(f"**简介**：{description}")
-
-    if directors:
-        d_names = [d.get("name", "") for d in directors]
-        st.markdown(f"**导演**：{' / '.join(d_names)}")
-
-    if actors:
-        a_names = [a.get("name", "") for a in actors[:5]]
-        suffix = "..." if len(actors) > 5 else ""
-        st.markdown(f"**主演**：{' / '.join(a_names)}{suffix}")
-
-    st.caption(source_tag)
+    st.markdown(body, unsafe_allow_html=True)
 
 
-def _render_search_results(data: dict, source_tag: str) -> None:
-    """混合搜索结果"""
+def _render_search_results(data: dict, source: str) -> None:
     actors = data.get("actors", [])
     directors = data.get("directors", [])
     videos = data.get("videos", [])
-
     if not any([actors, directors, videos]):
         st.info("没有找到相关结果。")
         return
 
-    st.markdown("#### :mag: 搜索结果")
-
+    sections = ""
     if actors:
-        st.markdown("**演员**")
-        for a in actors[:3]:
-            st.markdown(f"- {a.get('name', '')}")
-
+        items = "".join(f'<div class="k-item">🎭 {a.get("name", "")}</div>' for a in actors[:3])
+        sections += f'<h4 style="margin-top:12px;">演员</h4>{items}'
     if directors:
-        st.markdown("**导演**")
-        for d in directors[:3]:
-            st.markdown(f"- {d.get('name', '')}")
-
+        items = "".join(f'<div class="k-item">🎬 {d.get("name", "")}</div>' for d in directors[:3])
+        sections += f'<h4 style="margin-top:12px;">导演</h4>{items}'
     if videos:
-        st.markdown("**视频**")
-        for v in videos[:3]:
-            st.markdown(f"- {v.get('title', '')} ({v.get('year', '')})")
+        items = "".join(
+            f'<div class="k-item">📺 <b>{v.get("title", "")}</b> '
+            f'<span style="color:var(--text-muted);">({v.get("year", "")})</span></div>'
+            for v in videos[:3]
+        )
+        sections += f'<h4 style="margin-top:12px;">视频</h4>{items}'
 
-    st.caption(source_tag)
+    st.markdown(
+        f'<div class="k-card"><h4>🔍 搜索结果</h4>{sections}'
+        f'<div class="k-meta">📦 {source}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _film_item(v: dict) -> str:
+    title = v.get("title", "未知")
+    year = v.get("year", "")
+    rating = v.get("rating", "")
+    parts = [f'<b>{title}</b>']
+    if year:
+        parts.append(f'<span style="color:var(--text-muted);">({year})</span>')
+    if rating:
+        parts.append(f'<span style="color:var(--primary);">⭐ {rating}</span>')
+    return f'<div class="k-item">{" ".join(parts)}</div>'

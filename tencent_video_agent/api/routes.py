@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import json
 from typing import Any
 
 from dotenv import load_dotenv
@@ -9,7 +11,7 @@ from fastapi import FastAPI
 
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from api.config import CORS_ORIGINS, SERVICE_NAME, SERVICE_VERSION
@@ -96,6 +98,46 @@ async def chat_multi(request: MultiTurnRequest):
             status_code=500,
             content={"detail": str(e), "error_code": "CHAT_MULTI_ERROR"},
         )
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    """流式对话 — SSE 推送，逐字返回回复文本"""
+    async def event_stream():
+        # Stage 1: 开始处理
+        yield f"event: stage\ndata: 正在分析你的需求…\n\n"
+
+        try:
+            # 在后台线程运行工作流（同步转异步）
+            result = await asyncio.to_thread(run_query, request.query, request.thread_id)
+        except Exception as e:
+            yield f"event: error\ndata: {str(e)}\n\n"
+            return
+
+        response_text = result.get("response", "")
+
+        yield f"event: stage\ndata: 正在生成回复…\n\n"
+
+        # 将回复文本按小 chunks 流式推送
+        chunk_size = 2
+        for i in range(0, len(response_text), chunk_size):
+            chunk = response_text[i:i + chunk_size]
+            yield f"event: token\ndata: {chunk}\n\n"
+            await asyncio.sleep(0.015)
+
+        # 推送完整结果数据
+        result_data = _build_response(result, request.thread_id).model_dump()
+        yield f"event: result\ndata: {json.dumps(result_data, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/workflow/mermaid")

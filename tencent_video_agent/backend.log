@@ -4,3 +4,4 @@ INFO:     Started reloader process [12172] using WatchFiles
 INFO:     Started server process [36052]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'frontend\app.py'. Reloading...

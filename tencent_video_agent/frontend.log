@@ -1,10 +1,1 @@
-
-Collecting usage statistics. To deactivate, set browser.gatherUsageStats to false.
-
-
-  You can now view your Streamlit app in your browser.
-
-  Local URL: http://localhost:8501
-  Network URL: http://192.168.3.13:8501
-  External URL: http://104.238.220.112:8501
-
+2026-04-30 03:53:14.799 Port 8503 is not available

@@ -1,4 +1,4 @@
-"""对话界面组件 — 消息气泡 + 历史列表"""
+"""对话界面组件 — 基于 st.chat_message"""
 
 from typing import Any
 
@@ -14,50 +14,24 @@ def render_message(msg: dict, idx: int) -> None:
     """
     role = msg.get("role", "user")
     content = msg.get("content", "")
+    avatar = "🧑" if role == "user" else "🤖"
 
-    if role == "user":
-        st.markdown(
-            f"""<div style='
-                background-color: #dcf8c6;
-                border-radius: 12px;
-                padding: 8px 14px;
-                margin: 4px 0 4px auto;
-                max-width: 85%;
-                text-align: right;
-                word-wrap: break-word;
-            '>🧑 <b>{content}</b></div>""",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f"""<div style='
-                background-color: #f0f0f0;
-                border-radius: 12px;
-                padding: 8px 14px;
-                margin: 4px auto 4px 0;
-                max-width: 85%;
-                word-wrap: break-word;
-            '>🤖 {content}</div>""",
-            unsafe_allow_html=True,
-        )
+    with st.chat_message(role, avatar=avatar):
+        st.markdown(content)
 
 
 def render_chat_history(messages: list[dict]) -> None:
-    """渲染完整对话历史
-
-    Args:
-        messages: 消息列表
-    """
+    """渲染完整对话历史"""
     for i, msg in enumerate(messages):
+        # 跳过流式输出阶段临时插入的空数据消息
+        data = msg.get("data")
+        if data is None and msg["role"] == "assistant" and not msg.get("content", ""):
+            continue
         render_message(msg, i)
 
 
 def get_last_assistant_data(messages: list[dict]) -> dict | None:
-    """获取最后一条助手消息附带的数据
-
-    Returns:
-        如果最后一条消息是 assistant 且有 data 字段则返回，否则 None
-    """
+    """获取最后一条助手消息附带的数据"""
     for msg in reversed(messages):
         if msg.get("role") == "assistant" and "data" in msg:
             return msg["data"]

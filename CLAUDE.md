@@ -18,12 +18,12 @@ movieCompanion/
 │   ├── api/              # FastAPI 路由
 │   ├── data/             # 模拟数据生成
 │   ├── db/               # SQLite + Chroma
-│   ├── docs/             # 用户手册 + 开发文档 + 测试报告
+│   │   ├── docs/             # 用户手册 + 开发文档 + 测试报告 + 项目经验
 │   ├── frontend/         # Streamlit 前端
 │   ├── graph/            # LangGraph 工作流
 │   ├── knowledge_graph/  # Neo4j 知识图谱
 │   ├── tools/            # 检索/知识/Tool 工具
-│   ├── tests/            # 195 项测试
+│   ├── tests/            # 160~195 项测试
 │   ├── main.py           # 一键启动
 │   └── README.md
 └── src/                  # （旧代码，待清理）
@@ -38,7 +38,7 @@ movieCompanion/
 - **API 服务**：FastAPI
 - **存储**：SQLite + Chroma（向量数据库）+ Neo4j（知识图谱）
 - **前端**：Streamlit
-- **LLM 模型**：Llama3 / Qwen / 通义千问（可切换 GPT-3.5）
+- **LLM 模型**：DeepSeek（deepseek-v4-flash，OpenAI 兼容 API，通过 langchain-openai 接入）
 - **追踪调试**：LangSmith
 
 ---
@@ -221,7 +221,56 @@ tencent_video_agent/     # 【未创建】项目主目录
 
 ---
 
-## Vibe Coding 规则
+### 后续优化：Agent 输入全面 LLM 化
+
+#### LLM 替换关键词匹配（输入理解层）
+- [x] **IntentAgent** — 完全基于 LLM 意图分类
+  - 移除所有 `*_PATTERNS` 关键词字典 / `_match_patterns()` / `_classify_intent()`
+  - 使用 `build_intent_prompt()` → `get_llm().invoke()` → JSON 解析
+  - 回退：LLM 异常 → unknown
+
+- [x] **ChatAgent** — 完全基于 LLM 对话生成
+  - 移除 `GREETING_KEYWORDS` / `THANKS_KEYWORDS` / `_is_greeting()` / `_is_thanks()` 等
+  - 使用 `build_chat_prompt()` → `get_llm().invoke()`
+  - 回退：静态默认回复
+
+- [x] **KnowledgeAgent** — 完全基于 LLM 查询识别 + RAG
+  - 移除 `_format_result()` / 关键词 `detect_query_type()`（旧函数保留在 tools 层）
+  - 查询类型识别：`build_query_detect_prompt()` → LLM
+  - 回答生成：`knowledge_search()` 检索 → `build_rag_prompt()` → LLM
+  - 回退：LLM 异常 → "没有找到相关信息"
+
+- [x] **PlanAgent** — 完全基于 LLM 参数提取
+  - 移除 `TIME_SLOT_PATTERNS` / `MOOD_KEYWORDS` / `_extract_time_slot()` / `_extract_mood()`
+  - 参数提取：`build_plan_parse_prompt()` → LLM
+  - 计划编排：工具 `hybrid_search()` + 模板 `_build_plan_schedule()` + `_format_plan_response()`
+  - 回退：LLM 异常 → 默认参数
+
+#### 保持关键词匹配（工具层数据提取）
+- [ ] **RetrievalAgent.parse_query** — 保持关键词/正则
+  - `tools/search_tools.py` 中的 `_extract_genre()` / `_extract_year()` / `_extract_rating()` 等
+  - 理由：结构化数据提取（年份/评分/类型/演员/地区），正则覆盖率 > 90%，毫秒级响应
+  - LLM 替换反而会引入延迟 + 不确定性
+
+- [ ] **RecommendationAgent 输出** — 保持模板生成
+  - `REASON_TEMPLATES` 按类型随机选取推荐语
+  - 理由：每部视频调 LLM 5-10s，10 部 = 50-100s，用户不可接受
+  - 已实现 batch LLM prompt（`build_batch_recommend_prompt`），但未启用
+
+#### 关键决策文档
+- [x] **docs/项目经验.md** — LLM vs 关键词匹配的选型原则
+  - Agent 层（输入理解）→ LLM
+  - 工具层（数据提取）→ 关键词/正则
+  - 原则：理解意图用 LLM，提取参数用关键词
+
+#### 基础设施完善
+- [x] **utils/llm_client.py** — 自动 `load_dotenv()` 从项目根目录加载 `.env`
+  - 解决从任意入口（服务/测试/脚本）启动时环境变量未加载的问题
+- [x] **utils/prompts.py** — 新增 5 套 LLM Prompt 模板
+  - `build_query_detect_prompt` / `build_chat_prompt` / `build_query_parse_prompt`
+  - `build_plan_parse_prompt` / `build_batch_recommend_prompt`
+- [x] **frontend/utils/api_client.py** — 超时 30s → 60s（适配 DeepSeek API 延迟）
+- [x] **Neo4j** — 代码完整（schema + 7 个 Cypher 查询 + 自动降级），服务未启动时自动使用 SQLite 兜底
 
 1. 每次只做当前阶段的任务，不跳阶段
 2. 先写文档/注释/流程图，再写代码
