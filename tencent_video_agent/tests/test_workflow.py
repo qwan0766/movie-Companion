@@ -16,6 +16,7 @@ class TestWorkflowBuild:
         assert "knowledge_agent" in graph.nodes
         assert "chat_agent" in graph.nodes
         assert "plan_agent" in graph.nodes
+        assert "recommendation_agent" in graph.nodes
         assert "respond_node" in graph.nodes
 
     def test_get_mermaid(self):

@@ -11,6 +11,7 @@ from agents.retrieval_agent import RetrievalAgent
 from agents.knowledge_agent import KnowledgeAgent
 from agents.chat_agent import ChatAgent
 from agents.plan_agent import PlanAgent
+from agents.recommendation_agent import RecommendationAgent
 from graph.state import AgentState
 
 # Agent 实例（单例）
@@ -19,6 +20,7 @@ retrieval_agent = RetrievalAgent()
 knowledge_agent = KnowledgeAgent()
 chat_agent = ChatAgent()
 plan_agent = PlanAgent()
+recommendation_agent = RecommendationAgent()
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,12 @@ def chat_node(state: AgentState) -> dict:
 def plan_node(state: AgentState) -> dict:
     """观影计划节点"""
     return plan_agent.process(state)
+
+
+@safe_node
+def recommendation_node(state: AgentState) -> dict:
+    """推荐生成节点"""
+    return recommendation_agent.process(state)
 
 
 def respond_node(state: AgentState) -> dict:

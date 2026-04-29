@@ -1,12 +1,22 @@
 """腾讯视频智能观影助手 - 入口"""
 
+import uvicorn
+
+from api.config import API_HOST, API_PORT, API_RELOAD
+
 
 def main() -> None:
+    """一键启动 FastAPI 服务"""
     print("腾讯视频智能观影助手 v0.1")
-    print("请选择启动模式:")
-    print("  1. API 服务: uvicorn api.routes:app --reload")
-    print("  2. 前端界面: streamlit run frontend/app.py")
-    print("  3. 初始化数据库: python db/init_db.py")
+    print(f"API 服务启动: http://{API_HOST}:{API_PORT}")
+    print(f"API 文档:     http://{API_HOST}:{API_PORT}/docs")
+    print(f"交互式文档:   http://{API_HOST}:{API_PORT}/redoc")
+    uvicorn.run(
+        "api.routes:app",
+        host=API_HOST,
+        port=API_PORT,
+        reload=API_RELOAD,
+    )
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ from graph.nodes import (
     intent_node,
     knowledge_node,
     plan_node,
+    recommendation_node,
     respond_node,
     retrieval_node,
 )
@@ -24,7 +25,7 @@ def build_graph() -> StateGraph:
 
     工作流结构:
         START → intent_agent
-                ├── find_movie → retrieval_agent
+                ├── find_movie → retrieval_agent → recommendation_agent
                 ├── ask_info   → knowledge_agent
                 ├── make_plan  → plan_agent
                 ├── chat       → chat_agent
@@ -39,6 +40,7 @@ def build_graph() -> StateGraph:
     builder.add_node("knowledge_agent", knowledge_node)
     builder.add_node("chat_agent", chat_node)
     builder.add_node("plan_agent", plan_node)
+    builder.add_node("recommendation_agent", recommendation_node)
     builder.add_node("respond_node", respond_node)
 
     # START → 意图识别
@@ -58,7 +60,8 @@ def build_graph() -> StateGraph:
     )
 
     # 各 Agent → 回复生成
-    builder.add_edge("retrieval_agent", "respond_node")
+    builder.add_edge("retrieval_agent", "recommendation_agent")
+    builder.add_edge("recommendation_agent", "respond_node")
     builder.add_edge("knowledge_agent", "respond_node")
     builder.add_edge("plan_agent", "respond_node")
     builder.add_edge("chat_agent", "respond_node")
