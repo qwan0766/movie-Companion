@@ -20,6 +20,7 @@ from frontend.components.chat_ui import render_chat_history
 from frontend.components.knowledge_panel import render_knowledge_panel
 from frontend.components.plan_panel import render_plan_panel
 from frontend.components.video_card import render_video_grid
+from frontend.lucide_icons import icon
 from frontend.utils.api_client import health_check, stream_chat
 
 st.set_page_config(
@@ -38,7 +39,6 @@ st.markdown("""
    #00A1D6 腾讯蓝  |  Material Icons  |  Coolors palette
    ══════════════════════════════════════════════ */
 
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
 
 :root {
@@ -58,43 +58,80 @@ st.markdown("""
     --radius-sm: 8px;
     --radius-md: 12px;
 }
-html, body, .stApp { background: var(--bg-main) !important; }
+html, body, .stApp { background: var(--bg-main) !important; margin: 0 !important; padding: 0 !important; }
 .stApp, p, li, .stMarkdown, .stMarkdown p {
     font-family: "Noto Sans SC", "PingFang SC", "HarmonyOS Sans", system-ui, -apple-system, sans-serif !important;
     color: var(--text-primary) !important;
 }
-h1 { font-size: 26px !important; font-weight: 700 !important; color: var(--text-primary) !important; letter-spacing: -0.3px !important; }
+h1 { font-size: 26px !important; font-weight: 700 !important; color: var(--text-primary) !important; letter-spacing: -0.3px !important; margin-top: 0 !important; }
 h2 { font-size: 18px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
 h3 { font-size: 16px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
 h4 { font-size: 15px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
 
 /* ═══ Hide Streamlit chrome ═══ */
-#MainMenu, header, footer, .stDeployButton, div[data-testid="stToolbar"] { display: none !important; }
-.appview-container .main .block-container { padding-top: 2rem !important; }
+#MainMenu, footer, .stDeployButton { display: none !important; }
+div[data-testid="stDecoration"] { display: none !important; }
+/* Hide toolbar but show sidebar toggle as floating button */
+div[data-testid="stToolbar"] {
+    position: fixed !important;
+    right: 8px !important;
+    top: 8px !important;
+    background: transparent !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    width: auto !important;
+}
+div[data-testid="stToolbar"] button:first-child { display: inline-flex !important; }
+div[data-testid="stToolbar"] button:not(:first-child) { display: none !important; }
 
 /* ═══ Sidebar ═══ */
 section[data-testid="stSidebar"] {
+    min-width: 260px !important;
+    width: 260px !important;
+    max-width: 260px !important;
     background: var(--bg-surface) !important;
     border-right: 1px solid var(--border) !important;
-    min-width: 260px !important; width: 260px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 section[data-testid="stSidebar"] > div { padding: 20px 16px !important; }
+section[data-testid="stSidebar"] .sb-brand-text { color: var(--text-primary) !important; }
+section[data-testid="stSidebar"] .sb-brand-sub { color: var(--text-muted) !important; }
+section[data-testid="stSidebar"] .sb-label { color: var(--text-muted) !important; }
+section[data-testid="stSidebar"] .stButton > button {
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg-card) !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    border-radius: var(--radius-sm) !important;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+    background: rgba(0,161,214,0.05) !important;
+}
+section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+}
+section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+    background: var(--primary-hover) !important;
+    color: #fff !important;
+}
+section[data-testid="stSidebar"] hr { border-color: var(--border) !important; }
+section[data-testid="stSidebar"] .sb-brand { border-bottom-color: var(--border) !important; }
 .sb-brand { display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-.sb-brand .mi { font-size:28px !important; color:var(--primary) !important; }
+.sb-brand .lucide-icon { flex-shrink:0; }
 .sb-brand-text { font-weight:700 !important; font-size:17px !important; color:var(--text-primary) !important; letter-spacing:.5px; }
 .sb-brand-sub { font-size:11px !important; color:var(--text-muted) !important; margin-top:1px !important; }
 .sb-label { font-size:10px !important; text-transform:uppercase !important; letter-spacing:1.5px !important; color:var(--text-muted) !important; margin:20px 0 8px 0 !important; }
-
-/* Sidebar button — ghost style */
-section[data-testid="stSidebar"] .stButton > button {
-    background: transparent !important; border: 1px solid var(--border) !important;
-    color: var(--text-secondary) !important; box-shadow: none !important;
-    font-size: 13px !important; padding: 6px 12px !important; justify-content: flex-start !important;
-}
-section[data-testid="stSidebar"] .stButton > button:hover {
-    border-color: var(--primary) !important; color: var(--primary) !important;
-    background: rgba(0,161,214,0.05) !important;
-}
 
 /* ═══ Buttons ═══ */
 .stButton > button {
@@ -131,12 +168,32 @@ section[data-testid="stSidebar"] .stButton > button:hover {
 }
 .stTextInput > div > div > input::placeholder { color: var(--text-muted) !important; }
 
+/* ═══ Chat Input ═══ */
+[data-testid="stChatInput"] textarea {
+    background: var(--bg-card) !important; color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important; border-radius: var(--radius-sm) !important;
+    padding: 8px 14px !important; font-size: 14px !important;
+    caret-color: var(--primary) !important;
+}
+[data-testid="stChatInput"] textarea:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(0,161,214,0.12) !important;
+}
+[data-testid="stChatInput"] textarea::placeholder { color: var(--text-muted) !important; }
+[data-testid="stChatInput"] { margin-bottom: 8px !important; }
+
 /* ═══ Chat Messages ═══ */
-div[data-testid="stChatMessage"] { padding: 0 !important; margin: 6px 0 !important; }
+div[data-testid="stChatMessage"] {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    margin: 6px 0 !important;
+}
 div[data-testid="stChatMessageContent"] {
     background: var(--bg-card) !important;
     border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 4px !important;
-    padding: 3px 16px 14px !important;
+    padding: 12px 16px !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
     border-left: 3px solid var(--primary) !important;
     max-width: 92% !important;
@@ -151,14 +208,18 @@ div[data-testid="stChatMessageContent"] code {
     background: rgba(0,0,0,0.3) !important; padding: 1px 6px !important;
     border-radius: 4px !important; font-size: 13px !important;
 }
-div[data-testid="userAvatar"] + div[data-testid="stChatMessageContent"] {
+/* User message: right-aligned with right accent border */
+[data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
     background: linear-gradient(135deg, #1E2030, #1A1C23) !important;
     border-left: none !important; border-right: 3px solid var(--primary) !important;
     border-radius: var(--radius-md) var(--radius-md) 4px var(--radius-md) !important;
     margin-left: auto !important;
 }
+/* User avatar on the right side */
+[data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageAvatar"] {
+    order: 2 !important;
+}
 div[data-testid="stChatMessageAvatar"] { font-size: 20px !important; padding: 2px !important; }
-div[data-testid="userAvatar"] { order: 2 !important; }
 
 /* ═══ Video Grid — row gap #4 ═══ */
 div[data-testid="column"] { gap: 0 !important; }
@@ -223,6 +284,10 @@ hr { border-color:var(--border) !important; }
 .stSpinner > div > div { border-top-color:var(--primary) !important; }
 ::-webkit-scrollbar { width:5px; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* Lucide icons */
+.lucide-icon { display:inline-block; vertical-align:middle; }
+.video-poster-icon .lucide-icon { width:36px; height:36px; opacity:0.7; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -236,8 +301,6 @@ if "loading" not in st.session_state:
     st.session_state.loading = False
 if "selected_data" not in st.session_state:
     st.session_state.selected_data = None
-if "input_key" not in st.session_state:
-    st.session_state.input_key = 0
 
 
 def reset_session() -> None:
@@ -251,7 +314,6 @@ def send_query(text: str) -> None:
     if text and not st.session_state.loading:
         st.session_state.messages.append({"role": "user", "content": text})
         st.session_state.loading = True
-        st.session_state.input_key += 1
         st.rerun()
 
 
@@ -260,15 +322,14 @@ def send_query(text: str) -> None:
 # ═══════════════════════════════════════════════════════════════════
 
 with st.sidebar:
-    st.markdown("""
-    <div class="sb-brand">
-        <span class="material-icons mi" style="font-size:28px;color:#00A1D6;">smart_display</span>
-        <div>
-            <div class="sb-brand-text">腾讯视频</div>
-            <div class="sb-brand-sub">智能观影助手</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+    f'<div class="sb-brand">'
+    f'{icon("clapperboard", 28, style="color:#00A1D6;")}'
+    f'<div>'
+    f'<div class="sb-brand-text">腾讯视频</div>'
+    f'<div class="sb-brand-sub">智能观影助手</div>'
+    f'</div></div>',
+    unsafe_allow_html=True)
 
     if st.button("➕ 新对话", use_container_width=True, type="primary"):
         reset_session()
@@ -300,7 +361,7 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown(
-    "<h1 style='margin-bottom:2px;'>🎬 智能观影助手</h1>",
+    f"<h1 style='margin-bottom:2px;'>{icon('clapperboard', 24, style='vertical-align:-4px;')} 智能观影助手</h1>",
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -314,13 +375,13 @@ chat_col, detail_col = st.columns([0.4, 0.6])
 # ═══════ LEFT: CHAT ═══════
 
 with chat_col:
-    st.markdown("<div class='section-header'>💬 对话</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section-header'>{icon('message-circle', 18)} 对话</div>", unsafe_allow_html=True)
 
     with st.container(height=520, border=False):
         if not st.session_state.messages:
-            st.markdown("""
+            st.markdown(f"""
             <div style="text-align:center;padding:60px 20px;">
-                <div style="font-size:44px;margin-bottom:12px;opacity:0.5;">🎬</div>
+                <div style="margin-bottom:12px;opacity:0.5;">{icon('clapperboard', 44)}</div>
                 <p style="font-size:15px;color:var(--text-secondary);">开始对话吧</p>
                 <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">输入你想看的电影类型或演员名字</p>
             </div>
@@ -363,39 +424,25 @@ with chat_col:
         if st.session_state.messages:
             st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-    # ── 输入区 ──
-    with st.container(border=True):
-        query = st.text_input(
-            "输入消息",
-            placeholder="例如：推荐科幻电影、介绍一下张毅...",
-            label_visibility="collapsed",
-            key=f"q_{st.session_state.input_key}",  # ← key 递增 → 自动清空 #3
-            disabled=st.session_state.loading,
-        )
-        _, c2 = st.columns([4, 1])
-        with c2:
-            sbtn = st.button(
-                "发送", type="primary",
-                use_container_width=True,
-                disabled=st.session_state.loading or not query,
-            )
-
-    if sbtn and query and not st.session_state.loading:
+    # ── 输入区 (chat_input 原生支持 Enter 发送，自动清空) ──
+    if query := st.chat_input(
+        placeholder="例如：推荐科幻电影、介绍一下张毅...",
+        disabled=st.session_state.loading,
+    ):
         st.session_state.messages.append({"role": "user", "content": query})
         st.session_state.loading = True
-        st.session_state.input_key += 1  # ← 清空输入框
         st.rerun()
 
 
 # ═══════ RIGHT: DETAIL ═══════
 
 with detail_col:
-    st.markdown("<div class='section-header'>📑 详情</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section-header'>{icon('file-text', 18)} 详情</div>", unsafe_allow_html=True)
 
     if st.session_state.selected_data is None:
-        st.markdown("""
+        st.markdown(f"""
         <div style="text-align:center;padding:80px 20px;">
-            <div style="font-size:44px;margin-bottom:12px;opacity:0.35;">🎯</div>
+            <div style="margin-bottom:12px;opacity:0.35;">{icon('target', 44)}</div>
             <p style="font-size:15px;color:var(--text-secondary);">开始一段对话</p>
             <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">
                 推荐结果、影视知识、观影计划将在这里展示

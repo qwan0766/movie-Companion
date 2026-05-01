@@ -1,8 +1,8 @@
 """视频推荐卡片 — 16:9 海报占位 + 悬浮阴影 | 大厂简约风格"""
 
-from typing import Any
-
 import streamlit as st
+
+from frontend.lucide_icons import icon
 
 # ── 类型 → 渐变色映射（模拟海报视觉） ──────────────────────────────
 
@@ -36,15 +36,15 @@ def _get_gradient(genres: list[str]) -> str:
 
 def _get_genre_icon(genres: list[str]) -> str:
     icon_map = {
-        "科幻": "🚀", "喜剧": "😂", "动作": "💥", "爱情": "💕",
-        "悬疑": "🔍", "剧情": "🎭", "动画": "✨", "奇幻": "🔮",
-        "恐怖": "👻", "纪录片": "🌍", "古装": "🏯", "战争": "⚔️",
-        "武侠": "🗡️", "冒险": "🏔️", "历史": "📜",
+        "科幻": "rocket", "喜剧": "laugh", "动作": "zap", "爱情": "heart",
+        "悬疑": "search", "剧情": "drama", "动画": "sparkles", "奇幻": "wand-2",
+        "恐怖": "ghost", "纪录片": "globe", "古装": "landmark", "战争": "sword",
+        "武侠": "sword", "冒险": "mountain", "历史": "scroll-text",
     }
     for g in genres:
         if g in icon_map:
             return icon_map[g]
-    return "🎬"
+    return "film"
 
 
 def render_video_card(video: dict, key: str) -> None:
@@ -57,10 +57,10 @@ def render_video_card(video: dict, key: str) -> None:
     description = video.get("description", "")
 
     if isinstance(genres, str):
-        genres = genres.split(",") if genres else []
+        genres = [g.strip() for g in genres.split(",")] if genres else []
 
     gradient = _get_gradient(genres)
-    icon = _get_genre_icon(genres)
+    icon_name = _get_genre_icon(genres)
     rating_num = float(rating) if rating else 0
 
     # 评分 class
@@ -90,13 +90,13 @@ def render_video_card(video: dict, key: str) -> None:
     st.markdown(
         f"""<div class="video-card-wrap" style="margin-bottom: 0;">
             <div class="video-poster" style="background: {gradient};">
-                <span class="video-poster-icon">{icon}</span>
+                <span class="video-poster-icon">{icon(icon_name, 36)}</span>
                 <span class="video-poster-overlay">{rating}</span>
             </div>
             <div class="video-body">
                 <div class="video-title-row">
                     <span class="video-title-text">{title}</span>
-                    <span class="video-rating {r_class}">⭐ {rating}</span>
+                    <span class="video-rating {r_class}">{icon('star', 12)} {rating}</span>
                 </div>
                 <div class="video-meta">{meta_str}</div>
                 <div class="video-desc">{desc_text}</div>
@@ -130,6 +130,6 @@ def render_video_grid(videos: list[dict]) -> None:
 
     st.markdown(
         '<p style="color:var(--text-muted);font-size:12px;text-align:center;'
-        'margin-top:12px;">—— 点击卡片上方问详情 ——</p>',
+        'margin-top:12px;">—— 在对话框中提问了解更多详情 ——</p>',
         unsafe_allow_html=True,
     )

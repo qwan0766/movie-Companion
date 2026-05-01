@@ -1,8 +1,8 @@
-"""观影计划面板 — 原生 Streamlit 组件，避免 unsafe_allow_html 渲染问题"""
-
-from typing import Any
+"""观影计划面板 — 原生 Streamlit 组件"""
 
 import streamlit as st
+
+from frontend.lucide_icons import icon
 
 
 def render_plan_panel(plan: dict) -> None:
@@ -16,7 +16,7 @@ def render_plan_panel(plan: dict) -> None:
 
     mood_str = f"，来点{mood}的" if mood else ""
     st.markdown(
-        f'<div class="k-card"><h4>📅 为你制定{time_slot}的观影计划{mood_str}</h4></div>',
+        f'<div class="k-card"><h4>{icon("calendar", 18)} 为你制定{time_slot}的观影计划{mood_str}</h4></div>',
         unsafe_allow_html=True,
     )
 
@@ -28,7 +28,7 @@ def render_plan_panel(plan: dict) -> None:
         genre = item.get("genre", [])
 
         if isinstance(genre, str):
-            genre = genre.split(",") if genre else []
+            genre = [g.strip() for g in genre.split(",")] if genre else []
 
         with st.container(border=True):
             cols = st.columns([0.6, 9.4])
@@ -40,9 +40,9 @@ def render_plan_panel(plan: dict) -> None:
                     unsafe_allow_html=True,
                 )
             with cols[1]:
-                title_html = f"**{title}**"
+                title_html = f"<b>{title}</b>"
                 if rating:
-                    title_html += f"&nbsp;&nbsp;:primary[⭐ {rating}]"
+                    title_html += f"&nbsp;&nbsp;<span style='color:#00A1D6;font-weight:600;'>{icon('star', 14)} {rating}</span>"
                 st.markdown(title_html, unsafe_allow_html=True)
 
                 if genre:
@@ -55,7 +55,7 @@ def render_plan_panel(plan: dict) -> None:
                 if reason:
                     info_parts.append(reason)
                 if estimated:
-                    info_parts.append(f"⏱ {estimated}")
+                    info_parts.append(f"{icon('clock', 14)} {estimated}")
                 if info_parts:
                     st.caption(" | ".join(info_parts))
 
@@ -68,10 +68,10 @@ def render_plan_panel(plan: dict) -> None:
 
     st.divider()
     st.markdown(
-        f"共 **:primary[{total_count}]** 部，约 **:primary[{time_hint}]**"
+        f"共 **:blue[{total_count}]** 部，约 **:blue[{time_hint}]**"
     )
 
     if total_count >= 3:
-        st.info("💡 建议中间适当休息，保护眼睛哦～")
+        st.info(f"{icon('lightbulb', 16)} 建议中间适当休息，保护眼睛哦～")
 
     st.caption("要调整计划吗？告诉我新的需求～")

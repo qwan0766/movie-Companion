@@ -1,8 +1,8 @@
 """知识查询结果面板 — 简约卡片风格"""
 
-from typing import Any
-
 import streamlit as st
+
+from frontend.lucide_icons import icon
 
 
 def render_knowledge_panel(result: dict) -> None:
@@ -33,8 +33,8 @@ def _render_actor_films(data: list[dict], source: str) -> None:
     )
     more = f'<div style="color:var(--text-muted);font-size:13px;margin-top:4px;">...还有 {len(data) - 10} 部</div>' if len(data) > 10 else ""
     st.markdown(
-        f'<div class="k-card"><h4>🎭 {actor_name} 的作品</h4>{items}{more}'
-        f'<div class="k-meta">📦 {source}</div></div>',
+        f'<div class="k-card"><h4>{icon("drama", 18)} {actor_name} 的作品</h4>{items}{more}'
+        f'<div class="k-meta">{icon("package", 14)} {source}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -46,8 +46,8 @@ def _render_director_films(data: list[dict], source: str) -> None:
     )
     more = f'<div style="color:var(--text-muted);font-size:13px;margin-top:4px;">...还有 {len(data) - 10} 部</div>' if len(data) > 10 else ""
     st.markdown(
-        f'<div class="k-card"><h4>🎬 {director_name} 执导的作品</h4>{items}{more}'
-        f'<div class="k-meta">📦 {source}</div></div>',
+        f'<div class="k-card"><h4>{icon("clapperboard", 18)} {director_name} 执导的作品</h4>{items}{more}'
+        f'<div class="k-meta">{icon("package", 14)} {source}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -68,7 +68,7 @@ def _render_video_details(data: dict | list, source: str) -> None:
     actors = v.get("actors", [])
 
     if isinstance(genres, str):
-        genres = genres.split(",") if genres else []
+        genres = [g.strip() for g in genres.split(",")] if genres else []
 
     d_names = [d.get("name", "") for d in directors]
     a_names = [a.get("name", "") for a in actors[:5]]
@@ -77,18 +77,18 @@ def _render_video_details(data: dict | list, source: str) -> None:
     a_str = " / ".join(a_names) + a_suffix if a_names else ""
     tags_str = " ".join(f'<span class="video-tag">{g}</span>' for g in genres[:3])
 
-    body = f'<div class="k-card"><h4>🎬 {title}</h4>'
+    body = f'<div class="k-card"><h4>{icon("clapperboard", 18)} {title}</h4>'
     body += f'<div style="display:flex;gap:20px;margin:12px 0;font-size:14px;">'
-    body += f'<span><span style="color:var(--primary);font-weight:600;">⭐ {rating}</span></span>'
+    body += f'<span><span style="color:var(--primary);font-weight:600;">{icon("star", 14)} {rating}</span></span>'
     body += f'<span style="color:var(--text-secondary);">{year}</span>'
-    body += f'<span style="color:var(--text-secondary);">🌍 {region}</span></div>'
+    body += f'<span style="color:var(--text-secondary);">{icon("globe", 14)} {region}</span></div>'
     body += f'<div>{tags_str}</div>'
     body += f'<div style="margin-top:10px;font-size:14px;line-height:1.6;color:var(--text-secondary);">{description}</div>'
     if d_str:
         body += f'<div class="k-item" style="margin-top:8px;"><b>导演</b>：{d_str}</div>'
     if a_str:
         body += f'<div class="k-item"><b>主演</b>：{a_str}</div>'
-    body += f'<div class="k-meta">📦 {source}</div></div>'
+    body += f'<div class="k-meta">{icon("package", 14)} {source}</div></div>'
 
     st.markdown(body, unsafe_allow_html=True)
 
@@ -103,22 +103,22 @@ def _render_search_results(data: dict, source: str) -> None:
 
     sections = ""
     if actors:
-        items = "".join(f'<div class="k-item">🎭 {a.get("name", "")}</div>' for a in actors[:3])
+        items = "".join(f'<div class="k-item">{icon("drama", 16)} {a.get("name", "")}</div>' for a in actors[:3])
         sections += f'<h4 style="margin-top:12px;">演员</h4>{items}'
     if directors:
-        items = "".join(f'<div class="k-item">🎬 {d.get("name", "")}</div>' for d in directors[:3])
+        items = "".join(f'<div class="k-item">{icon("clapperboard", 16)} {d.get("name", "")}</div>' for d in directors[:3])
         sections += f'<h4 style="margin-top:12px;">导演</h4>{items}'
     if videos:
         items = "".join(
-            f'<div class="k-item">📺 <b>{v.get("title", "")}</b> '
+            f'<div class="k-item">{icon("film", 16)} <b>{v.get("title", "")}</b> '
             f'<span style="color:var(--text-muted);">({v.get("year", "")})</span></div>'
             for v in videos[:3]
         )
         sections += f'<h4 style="margin-top:12px;">视频</h4>{items}'
 
     st.markdown(
-        f'<div class="k-card"><h4>🔍 搜索结果</h4>{sections}'
-        f'<div class="k-meta">📦 {source}</div></div>',
+        f'<div class="k-card"><h4>{icon("search", 16)} 搜索结果</h4>{sections}'
+        f'<div class="k-meta">{icon("package", 14)} {source}</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -131,5 +131,5 @@ def _film_item(v: dict) -> str:
     if year:
         parts.append(f'<span style="color:var(--text-muted);">({year})</span>')
     if rating:
-        parts.append(f'<span style="color:var(--primary);">⭐ {rating}</span>')
+        parts.append(f'<span style="color:var(--primary);">{icon("star", 14)} {rating}</span>')
     return f'<div class="k-item">{" ".join(parts)}</div>'
