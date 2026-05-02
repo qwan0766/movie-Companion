@@ -16,7 +16,7 @@ if _project_root not in sys.path:
 
 import streamlit as st
 
-from frontend.components.chat_ui import render_chat_history
+from frontend.components.chat_ui import build_message_html, render_chat_history
 from frontend.components.knowledge_panel import render_knowledge_panel
 from frontend.components.plan_panel import render_plan_panel
 from frontend.components.video_card import render_video_grid
@@ -71,10 +71,49 @@ h4 { font-size: 15px !important; font-weight: 600 !important; color: var(--text-
 /* ═══ Hide Streamlit chrome ═══ */
 #MainMenu, footer, .stDeployButton { display: none !important; }
 div[data-testid="stDecoration"] { display: none !important; }
+header[data-testid="stHeader"],
+.stAppHeader {
+    background: transparent !important;
+    box-shadow: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+}
+header[data-testid="stHeader"]::before,
+header[data-testid="stHeader"]::after,
+.stAppHeader::before,
+.stAppHeader::after {
+    display: none !important;
+}
+.stAppViewContainer,
+.main,
+section.main {
+    background: var(--bg-main) !important;
+}
+.block-container,
+div[data-testid="stMainBlockContainer"],
+section[data-testid="stMain"] .block-container {
+    padding-top: 8px !important;
+}
+div[data-testid="stDeployButton"],
+div[data-testid="stStatusWidget"],
+a[href*="streamlit.io/cloud"],
+button[title="Deploy"] {
+    display: none !important;
+}
+[data-testid="stHeader"] button[aria-label="Deploy"],
+[data-testid="stHeader"] button[title="Deploy"],
+[data-testid="stHeader"] button[kind="header"],
+button[data-testid="stBaseButton-header"],
+button[data-testid="stMainMenuButton"],
+button.e7msn5c14,
+.st-emotion-cache-egm30d {
+    display: none !important;
+}
 /* Hide toolbar but show sidebar toggle as floating button */
 div[data-testid="stToolbar"] {
     position: fixed !important;
-    right: 8px !important;
+    left: 8px !important;
+    right: auto !important;
     top: 8px !important;
     background: transparent !important;
     z-index: 9999 !important;
@@ -85,16 +124,36 @@ div[data-testid="stToolbar"] {
 }
 div[data-testid="stToolbar"] button:first-child { display: inline-flex !important; }
 div[data-testid="stToolbar"] button:not(:first-child) { display: none !important; }
+div[data-testid="stToolbar"] button:first-child {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 8px !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+button[data-testid="stBaseButton-headerNoPadding"],
+button[data-testid="stExpandSidebarButton"] {
+    position: fixed !important;
+    left: 10px !important;
+    top: 10px !important;
+    z-index: 10000 !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 8px !important;
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
 
 /* ═══ Sidebar ═══ */
 section[data-testid="stSidebar"] {
-    min-width: 260px !important;
-    width: 260px !important;
-    max-width: 260px !important;
     background: var(--bg-surface) !important;
     border-right: 1px solid var(--border) !important;
-    visibility: visible !important;
-    opacity: 1 !important;
 }
 section[data-testid="stSidebar"] > div { padding: 20px 16px !important; }
 section[data-testid="stSidebar"] .sb-brand-text { color: var(--text-primary) !important; }
@@ -110,20 +169,36 @@ section[data-testid="stSidebar"] .stButton > button {
     justify-content: flex-start !important;
     height: auto !important;
     border-radius: var(--radius-sm) !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
     border-color: var(--primary) !important;
     color: var(--primary) !important;
     background: rgba(0,161,214,0.05) !important;
 }
+section[data-testid="stSidebar"] .stButton > button::before {
+    content: "" !important;
+    width: 3px !important;
+    height: 16px !important;
+    border-radius: 999px !important;
+    background: rgba(0,161,214,0.45) !important;
+    margin-right: 10px !important;
+    flex: 0 0 auto !important;
+}
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: var(--primary) !important;
-    color: #fff !important;
-    border-color: var(--primary) !important;
+    background: linear-gradient(180deg, rgba(0,161,214,0.12), rgba(0,161,214,0.04)) !important;
+    color: var(--text-primary) !important;
+    border-color: rgba(0,161,214,0.45) !important;
+    font-weight: 600 !important;
+    justify-content: center !important;
 }
 section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
-    background: var(--primary-hover) !important;
-    color: #fff !important;
+    background: rgba(0,161,214,0.12) !important;
+    color: var(--primary) !important;
+}
+section[data-testid="stSidebar"] .stButton > button[kind="primary"]::before {
+    display: none !important;
 }
 section[data-testid="stSidebar"] hr { border-color: var(--border) !important; }
 section[data-testid="stSidebar"] .sb-brand { border-bottom-color: var(--border) !important; }
@@ -181,25 +256,52 @@ section[data-testid="stSidebar"] .sb-brand { border-bottom-color: var(--border) 
 }
 [data-testid="stChatInput"] textarea::placeholder { color: var(--text-muted) !important; }
 [data-testid="stChatInput"] { margin-bottom: 8px !important; }
+[data-testid="stChatInput"],
+[data-testid="stChatInput"] > div,
+[data-testid="stBottomBlockContainer"],
+[data-testid="stBottom"] {
+    background: transparent !important;
+}
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] [data-baseweb="textarea"],
+[data-testid="stChatInput"] [data-baseweb="base-input"] {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+}
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] button {
+    box-shadow: none !important;
+    outline: none !important;
+}
+[data-testid="stChatInput"] button {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+}
 
 /* ═══ Chat Messages ═══ */
 div[data-testid="stChatMessage"] {
     display: flex !important;
     align-items: flex-start !important;
-    gap: 8px !important;
-    padding: 0 !important;
-    margin: 6px 0 !important;
+    gap: 12px !important;
+    padding: 10px 0 !important;
+    margin: 0 !important;
+    min-height: 42px !important;
 }
 div[data-testid="stChatMessageContent"] {
-    background: var(--bg-card) !important;
-    border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 4px !important;
-    padding: 12px 16px !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
-    border-left: 3px solid var(--primary) !important;
-    max-width: 92% !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 4px 0 !important;
+    box-shadow: none !important;
+    border-left: none !important;
+    max-width: calc(100% - 48px) !important;
+    min-height: 32px !important;
+    display: block !important;
 }
 div[data-testid="stChatMessageContent"] p {
-    margin: 0 0 6px 0 !important; font-size: 14px !important; line-height: 1.65 !important;
+    margin: 0 0 8px 0 !important; font-size: 14px !important; line-height: 1.62 !important;
     color: var(--text-primary) !important;
 }
 div[data-testid="stChatMessageContent"] p:last-child { margin-bottom: 0 !important; }
@@ -208,20 +310,74 @@ div[data-testid="stChatMessageContent"] code {
     background: rgba(0,0,0,0.3) !important; padding: 1px 6px !important;
     border-radius: 4px !important; font-size: 13px !important;
 }
-/* User message: right-aligned with right accent border */
+/* GPT-like user message: compact bubble on the right */
+[data-testid="stChatMessage"]:has([aria-label="user"]) {
+    justify-content: flex-end !important;
+}
 [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
-    background: linear-gradient(135deg, #1E2030, #1A1C23) !important;
-    border-left: none !important; border-right: 3px solid var(--primary) !important;
-    border-radius: var(--radius-md) var(--radius-md) 4px var(--radius-md) !important;
+    background: #1E2030 !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+    padding: 10px 14px !important;
+    max-width: 78% !important;
     margin-left: auto !important;
 }
-/* User avatar on the right side */
 [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageAvatar"] {
-    order: 2 !important;
+    display: none !important;
 }
 div[data-testid="stChatMessageAvatar"] { font-size: 20px !important; padding: 2px !important; }
+div[data-testid="stChatMessageAvatar"] {
+    padding: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    border-radius: 8px !important;
+    background: #E7F2FF !important;
+    color: #1E3A5F !important;
+}
 
 /* ═══ Video Grid — row gap #4 ═══ */
+.chat-row {
+    display: flex !important;
+    width: 100% !important;
+    margin: 12px 0 !important;
+}
+.chat-row-user {
+    justify-content: flex-end !important;
+}
+.chat-row-assistant {
+    justify-content: flex-start !important;
+}
+.chat-bubble {
+    font-size: 14px !important;
+    line-height: 1.65 !important;
+    color: var(--text-primary) !important;
+    overflow-wrap: anywhere !important;
+}
+.chat-bubble-user {
+    max-width: 78% !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    padding: 10px 14px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 18px !important;
+}
+.chat-bubble-assistant {
+    max-width: 88% !important;
+    padding: 4px 2px !important;
+    background: transparent !important;
+    border: none !important;
+}
+.chat-cursor {
+    color: var(--primary) !important;
+    margin-left: 2px !important;
+}
+
 div[data-testid="column"] { gap: 0 !important; }
 .video-card-wrap {
     background: var(--bg-card) !important;
@@ -271,6 +427,30 @@ div[data-testid="column"] { gap: 0 !important; }
 .plan-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px; margin:6px 0; transition:border-color .2s; }
 .plan-item:hover { border-color:var(--primary); }
 .plan-num { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; background:var(--primary); color:#fff; border-radius:50%; font-weight:700; font-size:13px; flex-shrink:0; }
+.plan-meta {
+    color: var(--text-secondary) !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    margin-top: 8px !important;
+}
+.plan-meta .lucide-icon,
+.plan-tip .lucide-icon {
+    width: 14px !important;
+    height: 14px !important;
+    vertical-align: -2px !important;
+}
+.plan-tip {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: rgba(0,161,214,0.06) !important;
+    border-left: 3px solid var(--primary) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+    margin: 12px 0 6px !important;
+}
 
 /* ═══ Section Header ═══ */
 .section-header { font-size:17px; font-weight:600; color:var(--text-primary); padding-bottom:6px; border-bottom:2px solid var(--primary); margin-bottom:14px; }
@@ -280,6 +460,17 @@ div[data-testid="column"] { gap: 0 !important; }
 [data-testid="stMetricLabel"] { color:var(--text-secondary) !important; font-size:12px !important; }
 .stAlert { background:var(--bg-card) !important; border:1px solid var(--border) !important; color:var(--text-primary) !important; }
 .stInfo { background:rgba(0,161,214,0.06) !important; border-left:3px solid var(--primary) !important; }
+.detail-note {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-left: 3px solid var(--primary) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-primary) !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    box-shadow: none !important;
+}
 hr { border-color:var(--border) !important; }
 .stSpinner > div > div { border-top-color:var(--primary) !important; }
 ::-webkit-scrollbar { width:5px; }
@@ -331,7 +522,7 @@ with st.sidebar:
     f'</div></div>',
     unsafe_allow_html=True)
 
-    if st.button("➕ 新对话", use_container_width=True, type="primary"):
+    if st.button("新对话", use_container_width=True, type="primary"):
         reset_session()
         st.rerun()
 
@@ -348,9 +539,9 @@ with st.sidebar:
 
     # 可点击的快捷按钮 #2
     for label, val in [
-        ("🎯 推荐科幻电影", "推荐科幻电影"),
-        ("📖 介绍一下张毅", "介绍一下张毅"),
-        ("📋 规划周末看什么", "帮我规划周末看什么"),
+        ("推荐科幻电影", "推荐科幻电影"),
+        ("介绍一下张毅", "介绍一下张毅"),
+        ("规划周末看什么", "帮我规划周末看什么"),
     ]:
         if st.button(label, use_container_width=True, key=f"sb_{val[:6]}"):
             send_query(val)
@@ -370,7 +561,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-chat_col, detail_col = st.columns([0.4, 0.6])
+chat_col, detail_col = st.columns([1, 1])
 
 # ═══════ LEFT: CHAT ═══════
 
@@ -397,17 +588,26 @@ with chat_col:
                 ""
             )
             if last_q:
-                def _gen():
-                    for ev, dt in stream_chat(last_q, st.session_state.thread_id):
-                        if ev == "token":
-                            yield dt
-                        elif ev == "result":
-                            holder["data"] = json.loads(dt)
-                        elif ev == "error":
-                            yield f"\n(连接错误: {dt})"
+                placeholder = st.empty()
+                chunks: list[str] = []
 
-                with st.chat_message("assistant", avatar="🤖"):
-                    resp = st.write_stream(_gen)
+                for ev, dt in stream_chat(last_q, st.session_state.thread_id):
+                    if ev == "token":
+                        chunks.append(dt)
+                        placeholder.markdown(
+                            build_message_html("assistant", "".join(chunks), streaming=True),
+                            unsafe_allow_html=True,
+                        )
+                    elif ev == "result":
+                        holder["data"] = json.loads(dt)
+                    elif ev == "error":
+                        chunks.append(f"\n(连接错误: {dt})")
+
+                resp = "".join(chunks)
+                placeholder.markdown(
+                    build_message_html("assistant", resp),
+                    unsafe_allow_html=True,
+                )
 
                 if holder["data"]:
                     st.session_state.messages.append({
@@ -463,4 +663,7 @@ with detail_col:
         elif intent == "make_plan" and plan:
             render_plan_panel(plan)
         elif intent in ("chat", "unknown"):
-            st.info("继续和我聊天吧！有什么观影需求尽管说～")
+            st.markdown(
+                '<div class="detail-note">继续和我聊天吧！有什么观影需求尽管说～</div>',
+                unsafe_allow_html=True,
+            )

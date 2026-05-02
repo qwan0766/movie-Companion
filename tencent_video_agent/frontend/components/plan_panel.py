@@ -57,7 +57,10 @@ def render_plan_panel(plan: dict) -> None:
                 if estimated:
                     info_parts.append(f"{icon('clock', 14)} {estimated}")
                 if info_parts:
-                    st.caption(" | ".join(info_parts))
+                    st.markdown(
+                        "<div class='plan-meta'>" + " | ".join(info_parts) + "</div>",
+                        unsafe_allow_html=True,
+                    )
 
     total_count = plan.get("total_count", len(schedule))
     total_time = sum(
@@ -72,6 +75,9 @@ def render_plan_panel(plan: dict) -> None:
     )
 
     if total_count >= 3:
-        st.info(f"{icon('lightbulb', 16)} 建议中间适当休息，保护眼睛哦～")
+        st.markdown(
+            f"<div class='plan-tip'>{icon('lightbulb', 16)} 建议中间适当休息，保护眼睛哦～</div>",
+            unsafe_allow_html=True,
+        )
 
     st.caption("要调整计划吗？告诉我新的需求～")
