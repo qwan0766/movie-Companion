@@ -9,16 +9,20 @@ INTENT_SYSTEM_PROMPT = """你是一个腾讯视频智能助手的意图识别引
 - ask_info: 用户想咨询影视知识、演员/导演信息、视频详情
 - make_plan: 用户想制定观影计划，包含时间安排（今晚/周末/明天等）
 - chat: 问候、寒暄、感谢、告别，以及与视频无关的话题
+- clarify: 用户表达太模糊，需要追问才能判断任务
+- out_of_scope: 用户请求明显超出当前腾讯视频观影助手能力范围
 - unknown: 无法明确归类到以上任何类别
 
 注意事项：
 - "介绍XXX" → ask_info（即使 XXX 后没有明确说明是演员还是视频）
 - "XXX演的电影" → find_movie（用户想看片）
 - "帮我规划/安排" → make_plan
-- 仅包含"电影/电视剧"等通用词但无具体找片意图 → unknown
+- 仅包含"电影/电视剧"等通用词但无具体找片意图 → clarify
+- 写代码、爬虫、订票、支付、文件处理等非观影助手能力 → out_of_scope
+- 置信度低于 0.55 时优先返回 clarify，不要强行归类
 
 请只返回 JSON 格式，不要包含其他内容：
-{"intent": "分类名称", "confidence": 0.0-1.0, "reason": "简短原因"}"""
+{"intent": "分类名称", "confidence": 0.0-1.0, "reason": "简短原因", "need_clarification": false, "clarification_question": "", "suggested_new_intent": ""}"""
 
 INTENT_FEW_SHOT = """
 用户：推荐几部好看的悬疑电影
@@ -41,6 +45,12 @@ INTENT_FEW_SHOT = """
 
 用户：abc
 {"intent": "unknown", "confidence": 0.0, "reason": "无意义的输入"}
+
+用户：帮我搞一下那个
+{"intent": "clarify", "confidence": 0.45, "reason": "用户没有说明具体任务", "need_clarification": true, "clarification_question": "你是想让我推荐影视、查询影视信息，还是帮你制定观影计划？", "suggested_new_intent": ""}
+
+用户：帮我写一段 Python 爬虫爬腾讯视频评论
+{"intent": "out_of_scope", "confidence": 0.86, "reason": "用户请求代码生成和数据采集，超出当前观影助手能力", "need_clarification": false, "clarification_question": "", "suggested_new_intent": "code_generation"}
 """
 
 

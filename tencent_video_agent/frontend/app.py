@@ -373,6 +373,46 @@ div[data-testid="stChatMessageAvatar"] {
     background: transparent !important;
     border: none !important;
 }
+.chat-line {
+    margin: 0 0 8px !important;
+}
+.chat-section-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 14px 0 8px !important;
+    padding: 2px 10px !important;
+    border-left: 3px solid var(--primary) !important;
+    color: var(--text-primary) !important;
+    background: rgba(0,161,214,0.08) !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 700 !important;
+}
+.chat-list-item {
+    display: grid !important;
+    grid-template-columns: 28px 1fr !important;
+    gap: 8px !important;
+    align-items: start !important;
+    margin: 7px 0 !important;
+}
+.chat-list-num {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    background: rgba(0,161,214,0.16) !important;
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+}
+.chat-list-body {
+    min-width: 0 !important;
+    color: var(--text-primary) !important;
+}
+.chat-spacer {
+    height: 6px !important;
+}
 .chat-cursor {
     color: var(--primary) !important;
     margin-left: 2px !important;
@@ -418,15 +458,46 @@ div[data-testid="column"] { gap: 0 !important; }
     font-size:11px; padding:1px 10px; border-radius:20px; margin:2px 4px 2px 0;
 }
 
-/* ═══ Knowledge Panel ═══ */
-.k-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; margin:10px 0; }
-.k-card .k-item { padding:3px 0; font-size:14px; color:var(--text-primary); }
-.k-card .k-meta { color:var(--text-muted); font-size:12px; margin-top:10px; }
+/* ═══ Detail Panels ═══ */
+.detail-card,
+.k-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 16px 18px !important;
+    margin: 10px 0 12px !important;
+}
+.detail-card-title,
+.k-card h4 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 0 12px !important;
+    color: var(--text-primary) !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+.detail-item,
+.k-card .k-item {
+    background: rgba(255,255,255,0.015) !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 12px 14px !important;
+    margin: 8px 0 !important;
+    font-size: 14px !important;
+    color: var(--text-primary) !important;
+}
+.detail-item-main { display:flex; align-items:center; gap:8px; font-weight:700; }
+.detail-item-meta,
+.k-card .k-meta {
+    color: var(--text-muted) !important;
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+    margin-top: 8px !important;
+}
+.detail-tags { margin-top:8px; }
 
-/* ═══ Plan Panel ═══ */
-.plan-item { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px; margin:6px 0; transition:border-color .2s; }
-.plan-item:hover { border-color:var(--primary); }
-.plan-num { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; background:var(--primary); color:#fff; border-radius:50%; font-weight:700; font-size:13px; flex-shrink:0; }
+.plan-num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:var(--primary); color:#fff; border-radius:50%; font-weight:700; font-size:13px; flex-shrink:0; }
 .plan-meta {
     color: var(--text-secondary) !important;
     font-size: 13px !important;
@@ -603,7 +674,11 @@ with chat_col:
                     elif ev == "error":
                         chunks.append(f"\n(连接错误: {dt})")
 
-                resp = "".join(chunks)
+                resp = (
+                    holder["data"].get("response", "")
+                    if holder["data"]
+                    else "".join(chunks)
+                )
                 placeholder.markdown(
                     build_message_html("assistant", resp),
                     unsafe_allow_html=True,

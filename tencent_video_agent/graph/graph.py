@@ -29,7 +29,9 @@ def build_graph() -> StateGraph:
                 ├── ask_info   → knowledge_agent
                 ├── make_plan  → plan_agent
                 ├── chat       → chat_agent
-                └── unknown    → chat_agent
+                ├── unknown    → chat_agent
+                ├── clarify    → respond_node
+                └── out_of_scope → respond_node
         各 Agent → respond_node → END
     """
     builder = StateGraph(AgentState)
@@ -56,6 +58,8 @@ def build_graph() -> StateGraph:
             "make_plan": "plan_agent",
             "chat": "chat_agent",
             "unknown": "chat_agent",
+            "clarify": "respond_node",
+            "out_of_scope": "respond_node",
         },
     )
 
@@ -93,6 +97,10 @@ def run_query(query: str, thread_id: str = "default") -> dict:
         messages=[{"role": "user", "content": query}],
         user_intent="",
         intent_confidence=0.0,
+        intent_reason="",
+        need_clarification=False,
+        clarification_question="",
+        suggested_new_intent="",
         retrieved_videos=[],
         knowledge_result={},
         plan={},
@@ -119,6 +127,10 @@ def run_multiturn(messages: list[dict], thread_id: str = "default") -> dict:
         messages=messages,
         user_intent="",
         intent_confidence=0.0,
+        intent_reason="",
+        need_clarification=False,
+        clarification_question="",
+        suggested_new_intent="",
         retrieved_videos=[],
         knowledge_result={},
         plan={},

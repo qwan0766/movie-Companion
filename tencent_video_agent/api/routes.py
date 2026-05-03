@@ -36,6 +36,10 @@ class ChatResponse(BaseModel):
     """对话响应"""
     user_intent: str = ""
     intent_confidence: float = 0.0
+    intent_reason: str = ""
+    need_clarification: bool = False
+    clarification_question: str = ""
+    suggested_new_intent: str = ""
     response: str = ""
     retrieved_videos: list[dict] = []
     knowledge_result: dict = {}
@@ -122,7 +126,7 @@ async def chat_stream(request: ChatRequest):
         chunk_size = 2
         for i in range(0, len(response_text), chunk_size):
             chunk = response_text[i:i + chunk_size]
-            yield f"event: token\ndata: {chunk}\n\n"
+            yield f"event: token\ndata: {json.dumps(chunk, ensure_ascii=False)}\n\n"
             await asyncio.sleep(0.015)
 
         # 推送完整结果数据
@@ -173,6 +177,10 @@ def _build_response(result: dict, thread_id: str) -> ChatResponse:
     return ChatResponse(
         user_intent=result.get("user_intent", ""),
         intent_confidence=result.get("intent_confidence", 0.0),
+        intent_reason=result.get("intent_reason", ""),
+        need_clarification=result.get("need_clarification", False),
+        clarification_question=result.get("clarification_question", ""),
+        suggested_new_intent=result.get("suggested_new_intent", ""),
         response=result.get("response", ""),
         retrieved_videos=result.get("retrieved_videos", []),
         knowledge_result=result.get("knowledge_result", {}),

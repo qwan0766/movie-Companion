@@ -1,6 +1,7 @@
 """LangGraph 工作流 端到端测试"""
 
-from graph.graph import build_graph, run_query
+from graph.graph import build_graph, route_after_intent, run_query
+from graph.nodes import respond_node
 from graph.state import AgentState
 
 
@@ -28,6 +29,31 @@ class TestWorkflowBuild:
 
 class TestWorkflowRouting:
     """工作流路由测试"""
+
+    def test_clarify_route_key(self):
+        state = {"user_intent": "clarify"}
+        assert route_after_intent(state) == "clarify"
+
+    def test_out_of_scope_route_key(self):
+        state = {"user_intent": "out_of_scope"}
+        assert route_after_intent(state) == "out_of_scope"
+
+    def test_respond_node_clarification(self):
+        result = respond_node({
+            "response": "",
+            "need_clarification": True,
+            "clarification_question": "你想看电影还是电视剧？",
+        })
+        assert result["response"] == "你想看电影还是电视剧？"
+
+    def test_respond_node_out_of_scope(self):
+        result = respond_node({
+            "response": "",
+            "user_intent": "out_of_scope",
+            "suggested_new_intent": "code_generation",
+        })
+        assert "腾讯视频" in result["response"]
+        assert "code_generation" in result["response"]
 
     def test_find_movie_route(self):
         result = run_query("推荐科幻电影")

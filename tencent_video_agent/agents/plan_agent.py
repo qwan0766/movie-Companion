@@ -79,18 +79,18 @@ def _format_plan_response(schedule: list[dict], time_slot: str, mood: str | None
     mood_desc = f"，来点{mood}的" if mood else ""
 
     lines = [
-        f"为你制定{slot_desc}的观影计划{mood_desc}：\n"
+        f"为你制定{slot_desc}的观影计划{mood_desc}：",
     ]
 
     for i, item in enumerate(schedule, 1):
-        rating_str = f" ⭐{item['rating']}" if item.get("rating") else ""
+        rating_str = f" 评分 {item['rating']}" if item.get("rating") else ""
         genre_str = ""
         if item.get("genre"):
             g = item["genre"]
             genre_str = f" [{', '.join(g[:2])}]" if isinstance(g, list) else f" [{g}]"
         lines.append(
-            f"{i}. 《{item['title']}》{rating_str}{genre_str}"
-            f"\n   {item['reason']} | 时长：{item['estimated_time']}"
+            f"{i}. 《{item['title']}》{rating_str}{genre_str} - "
+            f"{item['reason']} | 时长：{item['estimated_time']}"
         )
 
     total_time = sum(
@@ -101,13 +101,15 @@ def _format_plan_response(schedule: list[dict], time_slot: str, mood: str | None
     mins = total_time % 60
     time_hint = f"{hours}h" if mins == 0 else f"{hours}h{mins}min"
 
-    total_str = f"\n共 {len(schedule)} 部，约 {time_hint}"
+    total_str = f"共 {len(schedule)} 部，约 {time_hint}"
+    lines.append("")
     lines.append(total_str)
 
     if len(schedule) >= 3:
-        lines.append("\n💡 观影提示：建议中间适当休息，保护眼睛哦～")
+        lines.append("观影提示：建议中间适当休息，保护眼睛哦～")
 
-    lines.append("\n要调整计划吗？换类型、缩长时间或重新安排都行！")
+    lines.append("")
+    lines.append("要调整计划吗？换类型、缩长时间或重新安排都行！")
     return "\n".join(lines)
 
 

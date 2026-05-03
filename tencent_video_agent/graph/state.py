@@ -12,10 +12,22 @@ class AgentState(TypedDict):
     """完整对话历史（LangGraph 自动管理）"""
 
     user_intent: str
-    """用户意图: find_movie / ask_info / make_plan / chat / unknown"""
+    """用户意图: find_movie / ask_info / make_plan / chat / clarify / out_of_scope / unknown"""
 
     intent_confidence: float
     """意图识别置信度 0~1"""
+
+    intent_reason: str
+    """意图识别原因"""
+
+    need_clarification: bool
+    """是否需要追问用户"""
+
+    clarification_question: str
+    """澄清问题"""
+
+    suggested_new_intent: str
+    """超出当前能力时建议的新意图类型"""
 
     retrieved_videos: list[dict]
     """视频检索结果列表"""

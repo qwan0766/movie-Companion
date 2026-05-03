@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Generator
 
 import httpx
 import streamlit as st
 
-API_BASE_URL = "http://localhost:8001"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
 REQUEST_TIMEOUT = 60
 
 
@@ -103,6 +104,11 @@ def stream_chat(
                         current_event = line[7:]
                     elif line.startswith("data: "):
                         data = line[6:]
+                        if current_event == "token":
+                            try:
+                                data = json.loads(data)
+                            except json.JSONDecodeError:
+                                pass
                         if current_event:
                             yield current_event, data
                         current_event = ""

@@ -5,6 +5,7 @@ import pytest
 from tools.search_tools import (
     parse_query,
     _extract_genre,
+    _extract_video_type,
     _extract_year,
     _extract_rating,
     _extract_actor,
@@ -30,6 +31,12 @@ class TestParseQuery:
 
     def test_extract_genre_none(self):
         assert _extract_genre("随便看看") is None
+
+    def test_extract_video_type_movie(self):
+        assert _extract_video_type("推荐科幻电影") == "movie"
+
+    def test_extract_video_type_tv(self):
+        assert _extract_video_type("推荐一部悬疑电视剧") == "tv"
 
     def test_extract_year_specific(self):
         start, end = _extract_year("2020年的电影")
@@ -84,6 +91,7 @@ class TestParseQuery:
         """完整解析测试"""
         result = parse_query("推荐2020年以后的喜剧电影，评分高的")
         assert result["genre"] == "喜剧"
+        assert result["type"] == "movie"
         assert result["year_start"] == 2020
         assert result["year_end"] is None
         assert result["min_rating"] == 8.0
@@ -91,6 +99,7 @@ class TestParseQuery:
     def test_parse_query_empty(self):
         result = parse_query("推荐好看的")
         assert result["genre"] is None
+        assert result["type"] is None
         assert result["year_start"] is None
         assert result["min_rating"] is None
 
@@ -161,6 +170,9 @@ class TestHybridSearch:
         results = hybrid_search("好看的科幻电影", n_results=5)
         assert len(results) >= 1
         assert len(results) <= 5
+        for result in results:
+            assert result["type"] == "movie"
+            assert "科幻" in result.get("genres", [])
 
     def test_hybrid_search_with_genre(self):
         results = hybrid_search("喜剧片推荐", n_results=3)

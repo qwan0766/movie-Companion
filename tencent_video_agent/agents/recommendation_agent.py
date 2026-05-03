@@ -134,13 +134,6 @@ CATEGORY_LABELS: dict[str, str] = {
     "also_good": "同类推荐",
 }
 
-CATEGORY_EMOJIS: dict[str, str] = {
-    "best_match": "🏆",
-    "worth_watching": "👍",
-    "also_good": "🎬",
-}
-
-
 class RecommendationAgent(BaseAgent):
     """推荐生成 Agent — 完全基于 LLM"""
 
@@ -169,33 +162,33 @@ class RecommendationAgent(BaseAgent):
         categorized = _categorize_results(videos, {})
 
         # 直接使用结构化数据 + 标签展示（LLM 生成推荐语 API 延时过高）
-        lines = ["根据你的偏好，为你精选以下内容：\n"]
+        lines = ["根据你的偏好，为你精选以下内容："]
         for category_key in ["best_match", "worth_watching", "also_good"]:
             items = categorized.get(category_key, [])
             if not items:
                 continue
 
             label = CATEGORY_LABELS.get(category_key, category_key)
-            emoji = CATEGORY_EMOJIS.get(category_key, "•")
-            lines.append(f"{emoji} **{label}**")
+            if lines[-1] != "根据你的偏好，为你精选以下内容：":
+                lines.append("")
+            lines.append(f"【{label}】")
 
-            for v in items[:3]:
+            for index, v in enumerate(items[:3], 1):
                 title = v.get("title", "未知")
                 year = v.get("year", "")
                 rating = v.get("rating", "")
                 year_str = f" ({year})" if year else ""
-                rating_str = f" {rating}" if rating else ""
+                rating_str = f" 评分 {rating}" if rating else ""
                 tag = _build_tag(v, {})
-                lines.append(
-                    f"  • **{title}**{year_str} ⭐{rating_str} [{tag}]"
-                )
+                reason = _generate_reason(v)
+                lines.append(f"{index}. 《{title}》{year_str}{rating_str} [{tag}] - {reason}")
 
             total_in_cat = len(items)
             if total_in_cat > 3:
-                lines.append(f"    ...还有 {total_in_cat - 3} 部")
-            lines.append("")
+                lines.append(f"   还有 {total_in_cat - 3} 部同类内容")
 
         total = sum(len(v) for v in categorized.values())
+        lines.append("")
         if total > 5:
             lines.append(f"共找到 {total} 部相关视频，想看更多细节可以告诉我～")
         else:

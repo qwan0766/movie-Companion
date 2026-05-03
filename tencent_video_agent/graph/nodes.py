@@ -80,12 +80,23 @@ def recommendation_node(state: AgentState) -> dict:
 def respond_node(state: AgentState) -> dict:
     """回复生成节点 — 收集最终回复（不包装，安全兜底）
 
-    按优先级选择回复：response > 数据推断 > 默认问候
+    按优先级选择回复：response > clarify/out_of_scope > 数据推断 > 默认问候
     """
     response = state.get("response", "")
 
     if not response:
-        if state.get("retrieved_videos"):
+        if state.get("need_clarification"):
+            response = state.get("clarification_question") or (
+                "你是想让我推荐影视、查询影视信息，还是帮你制定观影计划？"
+            )
+        elif state.get("user_intent") == "out_of_scope":
+            suggested = state.get("suggested_new_intent", "")
+            suffix = f" 这个请求更像是 {suggested}。" if suggested else ""
+            response = (
+                "我目前主要能帮你做腾讯视频相关的找片推荐、影视信息查询和观影计划。"
+                f"{suffix}"
+            )
+        elif state.get("retrieved_videos"):
             count = len(state["retrieved_videos"])
             response = f"为你找到 {count} 部视频，想了解更多详情吗？"
         elif state.get("knowledge_result", {}).get("data"):

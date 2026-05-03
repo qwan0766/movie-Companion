@@ -29,6 +29,14 @@ GENRE_KEYWORDS = {
     "脱口秀": ["脱口秀", "脱口秀"],
 }
 
+TYPE_KEYWORDS = {
+    "movie": ["电影", "片子", "影片"],
+    "tv": ["电视剧", "剧集", "剧版", "追剧"],
+    "variety": ["综艺", "真人秀"],
+    "animation": ["动漫", "动画", "番剧"],
+    "documentary": ["纪录片", "纪实"],
+}
+
 # ── 查询解析 ─────────────────────────────────────────────────────────
 
 
@@ -38,6 +46,15 @@ def _extract_genre(text: str) -> str | None:
         for kw in keywords:
             if kw in text:
                 return genre
+    return None
+
+
+def _extract_video_type(text: str) -> str | None:
+    """从查询中提取内容类型"""
+    for video_type, keywords in TYPE_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text:
+                return video_type
     return None
 
 
@@ -130,11 +147,12 @@ def parse_query(query: str) -> dict:
     Returns:
         {"keywords": str, "genre": str|None, "year_start": int|None,
          "year_end": int|None, "min_rating": float|None,
-         "actor": str|None, "region": str|None}
+         "actor": str|None, "region": str|None, "type": str|None}
     """
     return {
         "keywords": query,
         "genre": _extract_genre(query),
+        "type": _extract_video_type(query),
         "year_start": _extract_year(query)[0],
         "year_end": _extract_year(query)[1],
         "min_rating": _extract_rating(query),
@@ -185,6 +203,7 @@ def filter_videos(
     actor_name: str | None = None,
     director_name: str | None = None,
     region: str | None = None,
+    type_filter: str | None = None,
     min_rating: float | None = None,
     sort_by: str = "rating",
     limit: int = 20,
@@ -198,6 +217,7 @@ def filter_videos(
         actor_name: 演员姓名
         director_name: 导演姓名
         region: 地区
+        type_filter: 内容类型（movie/tv/variety/animation/documentary）
         min_rating: 最低评分
         sort_by: 排序字段（rating/year）
         limit: 结果数量
@@ -214,6 +234,10 @@ def filter_videos(
     if genre:
         conditions.append("v.genres LIKE ?")
         params.append(f"%{genre}%")
+
+    if type_filter:
+        conditions.append("v.type = ?")
+        params.append(type_filter)
 
     if year_start is not None:
         conditions.append("v.year >= ?")
@@ -310,11 +334,13 @@ def hybrid_search(query: str, n_results: int = 10) -> list[dict]:
     """
     parsed = parse_query(query)
 
+    type_filter = parsed.get("type")
+
     # 1. 语义检索（宽召回）
     semantic_results = semantic_search(
         query,
         n_results=max(n_results * 3, 20),
-        type_filter=None,
+        type_filter=type_filter,
         min_rating=parsed.get("min_rating"),
     )
 
@@ -325,12 +351,14 @@ def hybrid_search(query: str, n_results: int = 10) -> list[dict]:
         year_end=parsed.get("year_end"),
         actor_name=parsed.get("actor"),
         region=parsed.get("region"),
+        type_filter=type_filter,
         min_rating=parsed.get("min_rating"),
         limit=max(n_results * 3, 20),
     )
 
     # 3. 结果融合（ID 集合加速查找）
-    filter_ids = {v["video_id"] for v in filter_results}
+    filter_by_id = {v["video_id"]: v for v in filter_results}
+    filter_ids = set(filter_by_id)
 
     # 优先：在语义结果中且也通过了过滤的（交集）
     priority: list[dict] = []
@@ -339,14 +367,24 @@ def hybrid_search(query: str, n_results: int = 10) -> list[dict]:
 
     for item in semantic_results:
         if item["video_id"] in filter_ids:
-            priority.append(item)
+            enriched = {**filter_by_id[item["video_id"]], "score": item.get("score")}
+            priority.append(enriched)
         else:
             secondary.append(item)
 
     # 如果还有剩余名额，从过滤结果中补充
     filter_extra = [v for v in filter_results if v["video_id"] not in {p["video_id"] for p in priority}]
 
-    merged = priority + secondary + filter_extra
+    has_structured_filter = any(
+        parsed.get(key) is not None
+        for key in ("genre", "type", "year_start", "year_end", "actor", "region", "min_rating")
+    )
+
+    if has_structured_filter and filter_results:
+        merged = filter_results
+    else:
+        merged = priority + secondary + filter_extra
+
     merged = _deduplicate(merged)
 
     return merged[:n_results]
